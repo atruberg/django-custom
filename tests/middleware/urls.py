@@ -1,9 +1,7 @@
-from django.conf.urls import url
+from django.conf.urls import patterns
 
-from . import views
-
-urlpatterns = [
-    url(r'^noslash$', views.empty_view),
-    url(r'^slash/$', views.empty_view),
-    url(r'^needsquoting#/$', views.empty_view),
-]
+urlpatterns = patterns('',
+    (r'^noslash$', 'view'),
+    (r'^slash/$', 'view'),
+    (r'^needsquoting#/$', 'view'),
+)

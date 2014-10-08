@@ -24,16 +24,11 @@ Available ``Meta`` options
 
 .. attribute:: Options.app_label
 
-    If a model exists outside of the standard locations (:file:`models.py` or
-    a ``models`` package in an app), the model must define which app it is part
-    of::
+    If a model exists outside of the standard :file:`models.py` (for instance,
+    if the app's models are in submodules of ``myapp.models``), the model must
+    define which app it is part of::
 
         app_label = 'myapp'
-
-    .. versionadded:: 1.7
-
-        ``app_label`` is no longer required for models that are defined
-        outside the ``models`` module of an application.
 
 ``db_table``
 ------------
@@ -74,14 +69,14 @@ Django quotes column and table names behind the scenes.
 
 .. admonition:: Table name quoting for Oracle
 
-   In order to meet the 30-char limitation Oracle has on table names,
+   In order to to meet the 30-char limitation Oracle has on table names,
    and match the usual conventions for Oracle databases, Django may shorten
    table names and turn them all-uppercase. To prevent such transformations,
    use a quoted name as the value for ``db_table``::
 
        db_table = '"name_left_in_lowercase"'
 
-   Such quoted names can also be used with Django's other supported database
+   Such quoted names can also be used with Django's other supported database 
    backends; except for Oracle, however, the quotes have no effect. See the
    :ref:`Oracle notes <oracle-notes>` for more details.
 
@@ -94,23 +89,6 @@ Django quotes column and table names behind the scenes.
     for this model. The default is the project's :setting:`DEFAULT_TABLESPACE`
     setting, if set. If the backend doesn't support tablespaces, this option is
     ignored.
-
-``default_related_name``
-------------------------
-
-.. attribute:: Options.default_related_name
-
-.. versionadded:: 1.8
-
-    The name that will be used by default for the relation from a related object
-    back to this one. The default is ``<model_name>_set``.
-
-    As the reverse name for a field should be unique, be careful if you intend
-    to subclass your model. To work around name collisions, part of the name
-    should contain ``'%(app_label)s'`` and ``'%(model_name)s'``, which are
-    replaced respectively by the name of the application the model is in,
-    and the name of the model, both lowercased. See the paragraph on
-    :ref:`related names for abstract models <abstract-related-name>`.
 
 ``get_latest_by``
 -----------------
@@ -135,9 +113,9 @@ Django quotes column and table names behind the scenes.
 .. attribute:: Options.managed
 
     Defaults to ``True``, meaning Django will create the appropriate database
-    tables in :djadmin:`migrate` or as part of migrations and remove them as
-    part of a :djadmin:`flush` management command. That is, Django
-    *manages* the database tables' lifecycles.
+    tables in :djadmin:`syncdb` and remove them as part of a :djadmin:`flush`
+    management command. That is, Django *manages* the database tables'
+    lifecycles.
 
     If ``False``, no database table creation or deletion operations will be
     performed for this model. This is useful if the model represents an existing
@@ -221,9 +199,9 @@ Django quotes column and table names behind the scenes.
 .. admonition:: Changing order_with_respect_to
 
         ``order_with_respect_to`` adds an additional field/database column
-        named ``_order``, so be sure to make and apply the appropriate
-        migrations if you add or change ``order_with_respect_to``
-        after your initial :djadmin:`migrate`.
+        named ``_order``, so be sure to handle that as you would any other
+        change to your models if you add or change ``order_with_respect_to``
+        after your initial :djadmin:`syncdb`.
 
 ``ordering``
 ------------
@@ -270,19 +248,6 @@ Django quotes column and table names behind the scenes.
     This is a list or tuple of 2-tuples in the format ``(permission_code,
     human_readable_permission_name)``.
 
-``default_permissions``
-------------------------------
-
-.. attribute:: Options.default_permissions
-
-    .. versionadded:: 1.7
-
-    Defaults to ``('add', 'change', 'delete')``. You may customize this list,
-    for example, by setting this to an empty list if your app doesn't require
-    any of the default permissions. It must be specified on the model before
-    the model is created by :djadmin:`migrate` in order to prevent any omitted
-    permissions from being created.
-
 ``proxy``
 ---------
 
@@ -295,6 +260,8 @@ Django quotes column and table names behind the scenes.
 ------------------
 
 .. attribute:: Options.select_on_save
+
+    .. versionadded:: 1.6
 
     Determines if Django will use the pre-1.6
     :meth:`django.db.models.Model.save()` algorithm. The old algorithm
@@ -336,15 +303,12 @@ Django quotes column and table names behind the scenes.
     :class:`~django.db.models.ManyToManyField`, try using a signal or
     an explicit :attr:`through <ManyToManyField.through>` model.
 
-    .. versionchanged:: 1.7
-
-    The ``ValidationError`` raised during model validation when the
-    constraint is violated has the ``unique_together`` error code.
-
 ``index_together``
 ------------------
 
 .. attribute:: Options.index_together
+
+    .. versionadded:: 1.5
 
     Sets of field names that, taken together, are indexed::
 
@@ -354,13 +318,6 @@ Django quotes column and table names behind the scenes.
 
     This list of fields will be indexed together (i.e. the appropriate
     ``CREATE INDEX`` statement will be issued.)
-
-    .. versionchanged:: 1.7
-
-    For convenience, ``index_together`` can be a single list when dealing with a single
-    set of fields::
-
-        index_together = ["pub_date", "deadline"]
 
 ``verbose_name``
 ----------------

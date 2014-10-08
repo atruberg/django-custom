@@ -15,7 +15,6 @@ from django.utils.encoding import python_2_unicode_compatible
 class Author(models.Model):
     name = models.CharField(max_length=150)
 
-
 @python_2_unicode_compatible
 class Article(models.Model):
     title = models.CharField(max_length=150)
@@ -32,11 +31,9 @@ class Article(models.Model):
 class SystemInfo(models.Model):
     system_name = models.CharField(max_length=32)
 
-
 class Forum(models.Model):
     system_info = models.ForeignKey(SystemInfo)
     forum_name = models.CharField(max_length=32)
-
 
 @python_2_unicode_compatible
 class Post(models.Model):
@@ -45,7 +42,6 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
-
 
 @python_2_unicode_compatible
 class Comment(models.Model):

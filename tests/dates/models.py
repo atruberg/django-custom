@@ -14,7 +14,6 @@ class Article(models.Model):
     def __str__(self):
         return self.title
 
-
 @python_2_unicode_compatible
 class Comment(models.Model):
     article = models.ForeignKey(Article, related_name="comments")
@@ -24,7 +23,6 @@ class Comment(models.Model):
 
     def __str__(self):
         return 'Comment to %s (%s)' % (self.article.title, self.pub_date)
-
 
 class Category(models.Model):
     name = models.CharField(max_length=255)

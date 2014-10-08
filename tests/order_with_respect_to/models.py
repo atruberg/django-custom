@@ -10,7 +10,6 @@ from django.utils.encoding import python_2_unicode_compatible
 class Question(models.Model):
     text = models.CharField(max_length=200)
 
-
 @python_2_unicode_compatible
 class Answer(models.Model):
     text = models.CharField(max_length=200)
@@ -21,7 +20,6 @@ class Answer(models.Model):
 
     def __str__(self):
         return six.text_type(self.text)
-
 
 @python_2_unicode_compatible
 class Post(models.Model):

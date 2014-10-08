@@ -1,11 +1,9 @@
 import warnings
 
 from django.test import TestCase
-from django.utils.deprecation import RemovedInNextVersionWarning
 
-warnings.warn("module-level warning from deprecation_app", RemovedInNextVersionWarning)
-
+warnings.warn("module-level warning from deprecation_app", DeprecationWarning)
 
 class DummyTest(TestCase):
     def test_warn(self):
-        warnings.warn("warning from test", RemovedInNextVersionWarning)
+        warnings.warn("warning from test", DeprecationWarning)

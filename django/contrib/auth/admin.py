@@ -1,9 +1,7 @@
 from django.db import transaction
 from django.conf import settings
-from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.admin.options import IS_POPUP_VAR
-from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import (UserCreationForm, UserChangeForm,
     AdminPasswordChangeForm)
 from django.contrib.auth.models import User, Group
@@ -50,8 +48,8 @@ class UserAdmin(admin.ModelAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2'),
-        }),
+            'fields': ('username', 'password1', 'password2')}
+        ),
     )
     form = UserChangeForm
     add_form = UserCreationForm
@@ -73,14 +71,19 @@ class UserAdmin(admin.ModelAdmin):
         """
         defaults = {}
         if obj is None:
-            defaults['form'] = self.add_form
+            defaults.update({
+                'form': self.add_form,
+                'fields': admin.util.flatten_fieldsets(self.add_fieldsets),
+            })
         defaults.update(kwargs)
         return super(UserAdmin, self).get_form(request, obj, **defaults)
 
     def get_urls(self):
-        return [
-            url(r'^(\d+)/password/$', self.admin_site.admin_view(self.user_change_password)),
-        ] + super(UserAdmin, self).get_urls()
+        from django.conf.urls import patterns
+        return patterns('',
+            (r'^(\d+)/password/$',
+             self.admin_site.admin_view(self.user_change_password))
+        ) + super(UserAdmin, self).get_urls()
 
     def lookup_allowed(self, lookup, value):
         # See #20078: we don't want to allow any lookups involving passwords.
@@ -132,7 +135,6 @@ class UserAdmin(admin.ModelAdmin):
                 self.log_change(request, user, change_message)
                 msg = ugettext('Password changed successfully.')
                 messages.success(request, msg)
-                update_session_auth_hash(request, form.user)
                 return HttpResponseRedirect('..')
         else:
             form = self.change_password_form(user)
@@ -145,8 +147,7 @@ class UserAdmin(admin.ModelAdmin):
             'adminForm': adminForm,
             'form_url': form_url,
             'form': form,
-            'is_popup': (IS_POPUP_VAR in request.POST or
-                         IS_POPUP_VAR in request.GET),
+            'is_popup': IS_POPUP_VAR in request.REQUEST,
             'add': True,
             'change': False,
             'has_delete_permission': False,
@@ -157,7 +158,6 @@ class UserAdmin(admin.ModelAdmin):
             'save_as': False,
             'show_save': True,
         }
-        context.update(admin.site.each_context())
         return TemplateResponse(request,
             self.change_user_password_template or
             'admin/auth/user/change_password.html',

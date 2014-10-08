@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+from __future__ import absolute_import
 
 import datetime
 
@@ -10,10 +10,10 @@ from .models import Thing
 class ReservedNameTests(TestCase):
     def generate(self):
         day1 = datetime.date(2005, 1, 1)
-        Thing.objects.create(when='a', join='b', like='c', drop='d',
+        t = Thing.objects.create(when='a', join='b', like='c', drop='d',
             alter='e', having='f', where=day1, has_hyphen='h')
         day2 = datetime.date(2006, 2, 2)
-        Thing.objects.create(when='h', join='i', like='j', drop='k',
+        u = Thing.objects.create(when='h', join='i', like='j', drop='k',
             alter='l', having='m', where=day2)
 
     def test_simple(self):

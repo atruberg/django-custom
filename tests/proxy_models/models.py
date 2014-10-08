@@ -9,16 +9,13 @@ from django.utils.encoding import python_2_unicode_compatible
 
 # A couple of managers for testing managing overriding in proxy model cases.
 
-
 class PersonManager(models.Manager):
     def get_queryset(self):
         return super(PersonManager, self).get_queryset().exclude(name="fred")
 
-
 class SubManager(models.Manager):
     def get_queryset(self):
         return super(SubManager, self).get_queryset().exclude(name="wilma")
-
 
 @python_2_unicode_compatible
 class Person(models.Model):
@@ -32,7 +29,6 @@ class Person(models.Model):
     def __str__(self):
         return self.name
 
-
 class Abstract(models.Model):
     """
     A simple abstract base class, to be used for error checking.
@@ -41,7 +37,6 @@ class Abstract(models.Model):
 
     class Meta:
         abstract = True
-
 
 class MyPerson(Person):
     """
@@ -61,13 +56,11 @@ class MyPerson(Person):
     def has_special_name(self):
         return self.name.lower() == "special"
 
-
 class ManagerMixin(models.Model):
     excluder = SubManager()
 
     class Meta:
         abstract = True
-
 
 class OtherPerson(Person, ManagerMixin):
     """
@@ -77,7 +70,6 @@ class OtherPerson(Person, ManagerMixin):
         proxy = True
         ordering = ["name"]
 
-
 class StatusPerson(MyPerson):
     """
     A non-proxy subclass of a proxy, it should get a new table.
@@ -85,16 +77,12 @@ class StatusPerson(MyPerson):
     status = models.CharField(max_length=80)
 
 # We can even have proxies of proxies (and subclass of those).
-
-
 class MyPersonProxy(MyPerson):
     class Meta:
         proxy = True
 
-
 class LowerStatusPerson(MyPersonProxy):
     status = models.CharField(max_length=80)
-
 
 @python_2_unicode_compatible
 class User(models.Model):
@@ -103,22 +91,17 @@ class User(models.Model):
     def __str__(self):
         return self.name
 
-
 class UserProxy(User):
     class Meta:
         proxy = True
-
 
 class UserProxyProxy(UserProxy):
     class Meta:
         proxy = True
 
 # We can still use `select_related()` to include related models in our querysets.
-
-
 class Country(models.Model):
     name = models.CharField(max_length=50)
-
 
 @python_2_unicode_compatible
 class State(models.Model):
@@ -128,26 +111,17 @@ class State(models.Model):
     def __str__(self):
         return self.name
 
-
 class StateProxy(State):
     class Meta:
         proxy = True
 
 # Proxy models still works with filters (on related fields)
 # and select_related, even when mixed with model inheritance
-
-
-@python_2_unicode_compatible
 class BaseUser(models.Model):
     name = models.CharField(max_length=255)
 
-    def __str__(self):
-        return ':'.join((self.__class__.__name__, self.name,))
-
-
 class TrackerUser(BaseUser):
     status = models.CharField(max_length=50)
-
 
 class ProxyTrackerUser(TrackerUser):
     class Meta:
@@ -160,13 +134,11 @@ class Issue(models.Model):
     assignee = models.ForeignKey(TrackerUser)
 
     def __str__(self):
-        return ':'.join((self.__class__.__name__, self.summary,))
-
+        return ':'.join((self.__class__.__name__,self.summary,))
 
 class Bug(Issue):
     version = models.CharField(max_length=50)
     reporter = models.ForeignKey(BaseUser)
-
 
 class ProxyBug(Bug):
     """
@@ -183,7 +155,6 @@ class ProxyProxyBug(ProxyBug):
     class Meta:
         proxy = True
 
-
 class Improvement(Issue):
     """
     A model that has relation to a proxy model
@@ -192,7 +163,6 @@ class Improvement(Issue):
     version = models.CharField(max_length=50)
     reporter = models.ForeignKey(ProxyTrackerUser)
     associated_bug = models.ForeignKey(ProxyProxyBug)
-
 
 class ProxyImprovement(Improvement):
     class Meta:

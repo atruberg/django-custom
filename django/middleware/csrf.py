@@ -26,7 +26,6 @@ REASON_BAD_TOKEN = "CSRF token missing or incorrect."
 
 CSRF_KEY_LENGTH = 32
 
-
 def _get_failure_view():
     """
     Returns the view to be used for CSRF rejections
@@ -93,7 +92,8 @@ class CsrfViewMiddleware(object):
         return None
 
     def _reject(self, request, reason):
-        logger.warning('Forbidden (%s): %s', reason, request.path,
+        logger.warning('Forbidden (%s): %s',
+                       reason, request.path,
             extra={
                 'status_code': 403,
                 'request': request,
@@ -167,15 +167,7 @@ class CsrfViewMiddleware(object):
             # Check non-cookie token for match.
             request_csrf_token = ""
             if request.method == "POST":
-                try:
-                    request_csrf_token = request.POST.get('csrfmiddlewaretoken', '')
-                except IOError:
-                    # Handle a broken connection before we've completed reading
-                    # the POST data. process_view shouldn't raise any
-                    # exceptions, so we'll ignore and serve the user a 403
-                    # (assuming they're still listening, which they probably
-                    # aren't because of the error).
-                    pass
+                request_csrf_token = request.POST.get('csrfmiddlewaretoken', '')
 
             if request_csrf_token == "":
                 # Fall back to X-CSRFToken, to make things easier for AJAX,
@@ -192,7 +184,7 @@ class CsrfViewMiddleware(object):
             return response
 
         # If CSRF_COOKIE is unset, then CsrfViewMiddleware.process_view was
-        # never called, probably because a request middleware returned a response
+        # never called, probaby because a request middleware returned a response
         # (for example, contrib.auth redirecting to a login page).
         if request.META.get("CSRF_COOKIE") is None:
             return response
@@ -204,7 +196,7 @@ class CsrfViewMiddleware(object):
         # the expiry timer.
         response.set_cookie(settings.CSRF_COOKIE_NAME,
                             request.META["CSRF_COOKIE"],
-                            max_age=settings.CSRF_COOKIE_AGE,
+                            max_age = 60 * 60 * 24 * 7 * 52,
                             domain=settings.CSRF_COOKIE_DOMAIN,
                             path=settings.CSRF_COOKIE_PATH,
                             secure=settings.CSRF_COOKIE_SECURE,

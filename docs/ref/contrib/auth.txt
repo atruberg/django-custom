@@ -81,12 +81,8 @@ Fields
 
     .. attribute:: last_login
 
-        A datetime of the user's last login.
-
-        .. versionchanged:: 1.8
-
-            This field will be ``null`` if the user has never logged in.
-            Previously it was set to the current date/time by default.
+        A datetime of the user's last login. Is set to the current date/time by
+        default.
 
     .. attribute:: date_joined
 
@@ -134,6 +130,8 @@ Methods
 
     .. method:: get_short_name()
 
+        .. versionadded:: 1.5
+
         Returns the :attr:`~django.contrib.auth.models.User.first_name`.
 
     .. method:: set_password(raw_password)
@@ -147,11 +145,22 @@ Methods
         :meth:`~django.contrib.auth.models.User.set_unusable_password()`
         were used.
 
+        .. versionchanged:: 1.6
+
+            In Django 1.4 and 1.5, a blank string was unintentionally stored
+            as an unusable password.
+
     .. method:: check_password(raw_password)
 
         Returns ``True`` if the given raw string is the correct password for
         the user. (This takes care of the password hashing in making the
         comparison.)
+
+        .. versionchanged:: 1.6
+
+            In Django 1.4 and 1.5, a blank string was unintentionally
+            considered to be an unusable password, resulting in this method
+            returning ``False`` for such a password.
 
     .. method:: set_unusable_password()
 
@@ -172,7 +181,7 @@ Methods
 
     .. method:: get_group_permissions(obj=None)
 
-        Returns a set of permission strings that the user has, through their
+        Returns a set of permission strings that the user has, through his/her
         groups.
 
         If ``obj`` is passed in, only returns the group permissions for
@@ -212,15 +221,24 @@ Methods
         (the Django app label). If the user is inactive, this method will
         always return ``False``.
 
-    .. method:: email_user(subject, message, from_email=None, **kwargs)
+    .. method:: email_user(subject, message, from_email=None)
 
         Sends an email to the user. If ``from_email`` is ``None``, Django uses
         the :setting:`DEFAULT_FROM_EMAIL`.
 
-        .. versionchanged:: 1.7
+    .. method:: get_profile()
 
-            Any ``**kwargs`` are passed to the underlying
-            :meth:`~django.core.mail.send_mail()` call.
+        .. deprecated:: 1.5
+            With the introduction of :ref:`custom User models <auth-custom-user>`,
+            the use of :setting:`AUTH_PROFILE_MODULE` to define a single profile
+            model is no longer supported. See the
+            :doc:`Django 1.5 release notes</releases/1.5>` for more information.
+
+        Returns a site-specific profile for this user. Raises
+        ``django.contrib.auth.models.SiteProfileNotAvailable`` if the
+        current site doesn't allow profiles, or
+        :exc:`django.core.exceptions.ObjectDoesNotExist` if the user does not
+        have a profile.
 
 Manager methods
 ---------------
@@ -269,10 +287,6 @@ Anonymous users
     these differences:
 
     * :ref:`id <automatic-primary-key-fields>` is always ``None``.
-    * :attr:`~django.contrib.auth.models.User.username` is always the empty
-      string.
-    * :meth:`~django.contrib.auth.models.User.get_username()` always returns
-      the empty string.
     * :attr:`~django.contrib.auth.models.User.is_staff` and
       :attr:`~django.contrib.auth.models.User.is_superuser` are always
       ``False``.
@@ -287,12 +301,8 @@ Anonymous users
     * :meth:`~django.contrib.auth.models.User.set_password()`,
       :meth:`~django.contrib.auth.models.User.check_password()`,
       :meth:`~django.db.models.Model.save` and
-      :meth:`~django.db.models.Model.delete()` raise :exc:`NotImplementedError`.
-
-    .. versionadded:: 1.8
-
-      ``AnonymousUser.get_username()`` has been added to
-      better mirror :class:`django.contrib.auth.models.User`.
+      :meth:`~django.db.models.Model.delete()` raise
+      :exc:`~exceptions.NotImplementedError`.
 
 In practice, you probably won't need to use
 :class:`~django.contrib.auth.models.AnonymousUser` objects on your own, but
@@ -309,20 +319,18 @@ Fields
 :class:`~django.contrib.auth.models.Permission` objects have the following
 fields:
 
-.. class:: models.Permission
+.. attribute:: name
 
-    .. attribute:: name
+    Required. 50 characters or fewer. Example: ``'Can vote'``.
 
-        Required. 50 characters or fewer. Example: ``'Can vote'``.
+.. attribute:: content_type
 
-    .. attribute:: content_type
+    Required. A reference to the ``django_content_type`` database table, which
+    contains a record for each installed Django model.
 
-        Required. A reference to the ``django_content_type`` database table,
-        which contains a record for each installed model.
+.. attribute:: codename
 
-    .. attribute:: codename
-
-        Required. 100 characters or fewer. Example: ``'can_vote'``.
+    Required. 100 characters or fewer. Example: ``'can_vote'``.
 
 Methods
 -------
@@ -340,21 +348,19 @@ Fields
 
 :class:`~django.contrib.auth.models.Group` objects have the following fields:
 
-.. class:: models.Group
+.. attribute:: name
 
-    .. attribute:: name
+    Required. 80 characters or fewer. Any characters are permitted. Example:
+    ``'Awesome Users'``.
 
-        Required. 80 characters or fewer. Any characters are permitted. Example:
-        ``'Awesome Users'``.
+.. attribute:: permissions
 
-    .. attribute:: permissions
+    Many-to-many field to :class:`~django.contrib.auth.models.Permission`::
 
-        Many-to-many field to :class:`~django.contrib.auth.models.Permission`::
-
-            group.permissions = [permission_list]
-            group.permissions.add(permission, permission, ...)
-            group.permissions.remove(permission, permission, ...)
-            group.permissions.clear()
+        group.permissions = [permission_list]
+        group.permissions.add(permission, permission, ...)
+        group.permissions.remove(permission, permission, ...)
+        group.permissions.clear()
 
 .. _topics-auth-signals:
 
@@ -397,6 +403,8 @@ can be used for notification when a user logs in or out.
         user was not authenticated.
 
 .. function:: user_login_failed
+
+    .. versionadded:: 1.5
 
     Sent when the user failed to login successfully
 
@@ -441,56 +449,6 @@ The following backends are available in :mod:`django.contrib.auth.backends`:
     It also handles the default permissions model as defined for
     :class:`~django.contrib.auth.models.User` and
     :class:`~django.contrib.auth.models.PermissionsMixin`.
-
-    :meth:`has_perm`, :meth:`get_all_permissions`, :meth:`get_user_permissions`,
-    and :meth:`get_group_permissions` allow an object to be passed as a
-    parameter for object-specific permissions, but this backend does not
-    implement them other than returning an empty set of permissions if
-    ``obj is not None``.
-
-    .. method:: authenticate(username=None, password=None, **kwargs)
-
-        Tries to authenticate ``username`` with ``password`` by calling
-        :meth:`User.check_password
-        <django.contrib.auth.models.User.check_password>`. If no ``username``
-        is provided, it tries to fetch a username from ``kwargs`` using the
-        key :attr:`CustomUser.USERNAME_FIELD
-        <django.contrib.auth.models.CustomUser.USERNAME_FIELD>`. Returns an
-        authenticated user or ``None``.
-
-    .. method:: get_user_permissions(user_obj, obj=None)
-
-        .. versionadded:: 1.8
-
-        Returns the set of permission strings the ``user_obj`` has from their
-        own user permissions. Returns an empty set if
-        :meth:`~django.contrib.auth.models.AbstractBaseUser.is_anonymous` or
-        :attr:`~django.contrib.auth.models.CustomUser.is_active` is ``False``.
-
-    .. method:: get_group_permissions(user_obj, obj=None)
-
-        Returns the set of permission strings the ``user_obj`` has from the
-        permissions of the groups they belong. Returns an empty set if
-        :meth:`~django.contrib.auth.models.AbstractBaseUser.is_anonymous` or
-        :attr:`~django.contrib.auth.models.CustomUser.is_active`  is ``False``.
-
-    .. method:: get_all_permissions(user_obj, obj=None)
-
-        Returns the set of permission strings the ``user_obj`` has, including both
-        user permissions and group permissions. Returns an empty set if
-        :meth:`~django.contrib.auth.models.AbstractBaseUser.is_anonymous` or
-        :attr:`~django.contrib.auth.models.CustomUser.is_active` is ``False``.
-
-    .. method:: has_perm(user_obj, perm, obj=None)
-
-        Uses :meth:`get_all_permissions` to check if ``user_obj`` has the
-        permission string ``perm``. Returns ``False`` if the user is not
-        :attr:`~django.contrib.auth.models.CustomUser.is_active`.
-
-    .. method:: has_module_perms(self, user_obj, app_label)
-
-        Returns whether the ``user_obj`` has any permissions on the app
-        ``app_label``.
 
 .. class:: RemoteUserBackend
 

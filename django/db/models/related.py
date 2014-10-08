@@ -10,7 +10,6 @@ PathInfo = namedtuple('PathInfo',
                       'from_opts to_opts target_fields join_field '
                       'm2m direct')
 
-
 class RelatedObject(object):
     def __init__(self, parent_model, model, field):
         self.parent_model = parent_model
@@ -26,7 +25,7 @@ class RelatedObject(object):
         as SelectField choices for this field.
 
         Analogue of django.db.models.fields.Field.get_choices, provided
-        initially for utilization by RelatedFieldListFilter.
+        initially for utilisation by RelatedFieldListFilter.
         """
         first_choice = blank_choice if include_blank else []
         queryset = self.model._default_manager.all()
@@ -57,14 +56,7 @@ class RelatedObject(object):
             # If this is a symmetrical m2m relation on self, there is no reverse accessor.
             if getattr(self.field.rel, 'symmetrical', False) and self.model == self.parent_model:
                 return None
-            if self.field.rel.related_name:
-                return self.field.rel.related_name
-            if self.opts.default_related_name:
-                return self.opts.default_related_name % {
-                    'model_name': self.opts.model_name.lower(),
-                    'app_label': self.opts.app_label.lower(),
-                }
-            return self.opts.model_name + '_set'
+            return self.field.rel.related_name or (self.opts.model_name + '_set')
         else:
             return self.field.rel.related_name or (self.opts.model_name)
 

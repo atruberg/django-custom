@@ -1,3 +1,3 @@
-from ..complex_app.models.bar import Bar
+from __future__ import absolute_import
 
-__all__ = ['Bar']
+from ..complex_app.models.bar import Bar

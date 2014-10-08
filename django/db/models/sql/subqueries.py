@@ -5,19 +5,20 @@ Query subclasses which provide extra functionality beyond simple data retrieval.
 from django.conf import settings
 from django.core.exceptions import FieldError
 from django.db import connections
-from django.db.models.query_utils import Q
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.fields import DateField, DateTimeField, FieldDoesNotExist
-from django.db.models.sql.constants import GET_ITERATOR_CHUNK_SIZE, NO_RESULTS, SelectInfo
+from django.db.models.sql.constants import *
 from django.db.models.sql.datastructures import Date, DateTime
 from django.db.models.sql.query import Query
+from django.db.models.sql.where import AND, Constraint
+from django.utils.functional import Promise
+from django.utils.encoding import force_text
 from django.utils import six
 from django.utils import timezone
 
 
 __all__ = ['DeleteQuery', 'UpdateQuery', 'InsertQuery', 'DateQuery',
         'DateTimeQuery', 'AggregateQuery']
-
 
 class DeleteQuery(Query):
     """
@@ -30,7 +31,7 @@ class DeleteQuery(Query):
     def do_query(self, table, where, using):
         self.tables = [table]
         self.where = where
-        self.get_compiler(using).execute_sql(NO_RESULTS)
+        self.get_compiler(using).execute_sql(None)
 
     def delete_batch(self, pk_list, using, field=None):
         """
@@ -42,10 +43,10 @@ class DeleteQuery(Query):
         if not field:
             field = self.get_meta().pk
         for offset in range(0, len(pk_list), GET_ITERATOR_CHUNK_SIZE):
-            self.where = self.where_class()
-            self.add_q(Q(
-                **{field.attname + '__in': pk_list[offset:offset + GET_ITERATOR_CHUNK_SIZE]}))
-            self.do_query(self.get_meta().db_table, self.where, using=using)
+            where = self.where_class()
+            where.add((Constraint(None, field.column, field), 'in',
+                       pk_list[offset:offset + GET_ITERATOR_CHUNK_SIZE]), AND)
+            self.do_query(self.get_meta().db_table, where, using=using)
 
     def delete_qs(self, query, using):
         """
@@ -61,8 +62,8 @@ class DeleteQuery(Query):
         innerq_used_tables = [t for t in innerq.tables
                               if innerq.alias_refcount[t]]
         if ((not innerq_used_tables or innerq_used_tables == self.tables)
-                and not len(innerq.having)):
-            # There is only the base table in use in the query, and there is
+            and not len(innerq.having)):
+            # There is only the base table in use in the query, and there are
             # no aggregate filtering going on.
             self.where = innerq.where
         else:
@@ -76,13 +77,12 @@ class DeleteQuery(Query):
                 return
             else:
                 innerq.clear_select_clause()
-                innerq.select = [
-                    SelectInfo((self.get_initial_alias(), pk.column), None)
-                ]
+                innerq.select = [SelectInfo((self.get_initial_alias(), pk.column), None)]
                 values = innerq
-            self.where = self.where_class()
-            self.add_q(Q(pk__in=values))
-        self.get_compiler(using).execute_sql(NO_RESULTS)
+            where = self.where_class()
+            where.add((Constraint(None, pk.column, pk), 'in', values), AND)
+            self.where = where
+        self.get_compiler(using).execute_sql(None)
 
 
 class UpdateQuery(Query):
@@ -112,11 +112,14 @@ class UpdateQuery(Query):
                 related_updates=self.related_updates.copy(), **kwargs)
 
     def update_batch(self, pk_list, values, using):
+        pk_field = self.get_meta().pk
         self.add_update_values(values)
         for offset in range(0, len(pk_list), GET_ITERATOR_CHUNK_SIZE):
             self.where = self.where_class()
-            self.add_q(Q(pk__in=pk_list[offset: offset + GET_ITERATOR_CHUNK_SIZE]))
-            self.get_compiler(using).execute_sql(NO_RESULTS)
+            self.where.add((Constraint(None, pk_field.column, pk_field), 'in',
+                            pk_list[offset:offset + GET_ITERATOR_CHUNK_SIZE]),
+                           AND)
+            self.get_compiler(using).execute_sql(None)
 
     def add_update_values(self, values):
         """
@@ -128,10 +131,7 @@ class UpdateQuery(Query):
         for name, val in six.iteritems(values):
             field, model, direct, m2m = self.get_meta().get_field_by_name(name)
             if not direct or m2m:
-                raise FieldError(
-                    'Cannot update model field %r (only non-relations and '
-                    'foreign keys permitted).' % field
-                )
+                raise FieldError('Cannot update model field %r (only non-relations and foreign keys permitted).' % field)
             if model:
                 self.add_related_update(model, field, val)
                 continue
@@ -144,6 +144,10 @@ class UpdateQuery(Query):
         Used by add_update_values() as well as the "fast" update path when
         saving models.
         """
+        # Check that no Promise object passes to the query. Refs #10498.
+        values_seq = [(value[0], value[1], force_text(value[2]))
+                      if isinstance(value[2], Promise) else value
+                      for value in values_seq]
         self.values.extend(values_seq)
 
     def add_related_update(self, model, field, value):
@@ -152,7 +156,10 @@ class UpdateQuery(Query):
 
         Updates are coalesced so that we only run one update query per ancestor.
         """
-        self.related_updates.setdefault(model, []).append((field, None, value))
+        try:
+            self.related_updates[model].append((field, None, value))
+        except KeyError:
+            self.related_updates[model] = [(field, None, value)]
 
     def get_related_updates(self):
         """
@@ -170,7 +177,6 @@ class UpdateQuery(Query):
                 query.add_filter(('pk__in', self.related_ids))
             result.append(query)
         return result
-
 
 class InsertQuery(Query):
     compiler = 'SQLInsertCompiler'
@@ -200,9 +206,14 @@ class InsertQuery(Query):
         into the query, for example.
         """
         self.fields = fields
+        # Check that no Promise object reaches the DB. Refs #10498.
+        for field in fields:
+            for obj in objs:
+                value = getattr(obj, field.attname)
+                if isinstance(value, Promise):
+                    setattr(obj, field.attname, force_text(value))
         self.objs = objs
         self.raw = raw
-
 
 class DateQuery(Query):
     """
@@ -218,7 +229,7 @@ class DateQuery(Query):
         Converts the query into an extraction query.
         """
         try:
-            field, _, _, joins, _ = self.setup_joins(
+            result = self.setup_joins(
                 field_name.split(LOOKUP_SEP),
                 self.get_meta(),
                 self.get_initial_alias(),
@@ -227,8 +238,9 @@ class DateQuery(Query):
             raise FieldDoesNotExist("%s has no field named '%s'" % (
                 self.get_meta().object_name, field_name
             ))
+        field = result[0]
         self._check_field(field)                # overridden in DateTimeQuery
-        alias = joins[-1]
+        alias = result[3][-1]
         select = self._get_select((alias, field.column), lookup_type)
         self.clear_select_clause()
         self.select = [SelectInfo(select, None)]
@@ -248,7 +260,6 @@ class DateQuery(Query):
     def _get_select(self, col, lookup_type):
         return Date(col, lookup_type)
 
-
 class DateTimeQuery(DateQuery):
     """
     A DateTimeQuery is like a DateQuery but for a datetime field. If time zone
@@ -265,7 +276,7 @@ class DateTimeQuery(DateQuery):
 
     def _check_field(self, field):
         assert isinstance(field, DateTimeField), \
-            "%r isn't a DateTimeField." % field.name
+                "%r isn't a DateTimeField." % field.name
 
     def _get_select(self, col, lookup_type):
         if self.tzinfo is None:
@@ -273,7 +284,6 @@ class DateTimeQuery(DateQuery):
         else:
             tzname = timezone._get_timezone_name(self.tzinfo)
         return DateTime(col, lookup_type, tzname)
-
 
 class AggregateQuery(Query):
     """

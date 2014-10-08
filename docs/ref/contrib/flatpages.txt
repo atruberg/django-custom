@@ -46,23 +46,23 @@ Then either:
 
 3. Add an entry in your URLconf. For example::
 
-    urlpatterns = [
-        url(r'^pages/', include('django.contrib.flatpages.urls')),
-    ]
+    urlpatterns = patterns('',
+        (r'^pages/', include('django.contrib.flatpages.urls')),
+    )
 
 or:
 
 3. Add ``'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware'``
    to your :setting:`MIDDLEWARE_CLASSES` setting.
 
-4. Run the command :djadmin:`manage.py migrate <migrate>`.
+4. Run the command :djadmin:`manage.py syncdb <syncdb>`.
 
 .. currentmodule:: django.contrib.flatpages.middleware
 
 How it works
 ============
 
-``manage.py migrate`` creates two tables in your database: ``django_flatpage``
+``manage.py syncdb`` creates two tables in your database: ``django_flatpage``
 and ``django_flatpage_sites``. ``django_flatpage`` is a simple lookup table
 that simply maps a URL to a title and bunch of text content.
 ``django_flatpage_sites`` associates a flatpage with a site.
@@ -73,19 +73,17 @@ Using the URLconf
 There are several ways to include the flat pages in your URLconf. You can
 dedicate a particular path to flat pages::
 
-    urlpatterns = [
-        url(r'^pages/', include('django.contrib.flatpages.urls')),
-    ]
+    urlpatterns = patterns('',
+        (r'^pages/', include('django.contrib.flatpages.urls')),
+    )
 
 You can also set it up as a "catchall" pattern. In this case, it is important
 to place the pattern at the end of the other urlpatterns::
 
-    from django.contrib.flatpages import views
-
     # Your other patterns here
-    urlpatterns += [
-        url(r'^(?P<url>.*/)$', views.flatpage),
-    ]
+    urlpatterns += patterns('django.contrib.flatpages.views',
+        (r'^(?P<url>.*/)$', 'flatpage'),
+    )
 
 .. warning::
 
@@ -97,12 +95,10 @@ Another common setup is to use flat pages for a limited set of known pages and
 to hard code the urls, so you can reference them with the :ttag:`url` template
 tag::
 
-    from django.contrib.flatpages import views
-
-    urlpatterns += [
-        url(r'^about-us/$', views.flatpage, {'url': '/about-us/'}, name='about'),
-        url(r'^license/$', views.flatpage, {'url': '/license/'}, name='license'),
-    ]
+    urlpatterns += patterns('django.contrib.flatpages.views',
+        url(r'^about-us/$', 'flatpage', {'url': '/about-us/'}, name='about'),
+        url(r'^license/$', 'flatpage', {'url': '/license/'}, name='license'),
+    )
 
 Using the middleware
 --------------------

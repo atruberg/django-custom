@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from unittest import TestCase
-
 from django.template import Template, TemplateEncodingError, Context
 from django.utils.safestring import SafeData
 from django.utils import six
+from django.utils.unittest import TestCase
 
 
 class UnicodeTests(TestCase):
@@ -20,10 +19,10 @@ class UnicodeTests(TestCase):
         self.assertRaises(TemplateEncodingError, Template, s)
 
         # Contexts can be constructed from unicode or UTF-8 bytestrings.
-        Context({b"var": b"foo"})
-        Context({"var": b"foo"})
+        c1 = Context({b"var": b"foo"})
+        c2 = Context({"var": b"foo"})
         c3 = Context({b"var": "Đđ"})
-        Context({"var": b"\xc4\x90\xc4\x91"})
+        c4 = Context({"var": b"\xc4\x90\xc4\x91"})
 
         # Since both templates and all four contexts represent the same thing,
         # they all render the same (and are returned as unicode objects and

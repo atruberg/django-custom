@@ -79,10 +79,10 @@ if using a UNIX-like system, or a semicolon (``;``) if using Windows. If any
 part of a directory path contains a space character, the complete argument
 string to ``WSGIPythonPath`` must be quoted::
 
-    WSGIPythonPath /path/to/mysite.com:/path/to/your/venv/lib/python3.X/site-packages
+    WSGIPythonPath /path/to/mysite.com:/path/to/your/venv/lib/python2.X/site-packages
 
 Make sure you give the correct path to your virtualenv, and replace
-``python3.X`` with the correct Python version (e.g. ``python3.4``).
+``python2.X`` with the correct Python version (e.g. ``python2.7``).
 
 .. _virtualenv: http://www.virtualenv.org
 
@@ -198,7 +198,7 @@ other approaches:
    configuration).
 
 2. Use an ``Alias`` directive, as demonstrated above, to alias the appropriate
-   URL (probably :setting:`STATIC_URL` + ``admin/``) to the actual location of
+   URL (probably :setting:`STATIC_URL` + `admin/`) to the actual location of
    the admin files.
 
 3. Copy the admin static files so that they live within your Apache
@@ -219,7 +219,7 @@ If you're taking advantage of the internationalization features of Django (see
 ensure that the environment used to start Apache is configured to accept
 non-ASCII file names. If your environment is not correctly configured, you
 will trigger ``UnicodeEncodeError`` exceptions when calling functions like
-the ones in :mod:`os.path` on filenames that contain non-ASCII characters.
+``os.path()`` on filenames that contain non-ASCII characters.
 
 To avoid these problems, the environment used to start Apache should contain
 settings analogous to the following::

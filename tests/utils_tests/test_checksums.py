@@ -2,7 +2,6 @@ import unittest
 
 from django.utils import checksums
 
-
 class TestUtilsChecksums(unittest.TestCase):
 
     def check_output(self, function, value, output=None):

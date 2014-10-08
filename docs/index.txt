@@ -25,8 +25,7 @@ Having trouble? We'd like to help!
 
 * Report bugs with Django in our `ticket tracker`_.
 
-.. _archives: http://groups.google.com/group/django-users/
-.. _post a question: https://groups.google.com/d/forum/django-users
+.. _post a question: http://groups.google.com/group/django-users/
 .. _#django IRC channel: irc://irc.freenode.net/django
 .. _IRC logs: http://django-irc-logs.com/
 .. _ticket tracker: https://code.djangoproject.com/
@@ -61,23 +60,15 @@ manipulating the data of your Web application. Learn more about it below:
 * **Models:**
   :doc:`Model syntax <topics/db/models>` |
   :doc:`Field types <ref/models/fields>` |
-  :doc:`Meta options <ref/models/options>` |
-  :doc:`Model class <ref/models/class>`
+  :doc:`Meta options <ref/models/options>`
 
 * **QuerySets:**
   :doc:`Executing queries <topics/db/queries>` |
-  :doc:`QuerySet method reference <ref/models/querysets>` |
-  :doc:`Query-related classes <ref/models/queries>` |
-  :doc:`Lookup expressions <ref/models/lookups>`
+  :doc:`QuerySet method reference <ref/models/querysets>`
 
 * **Model instances:**
   :doc:`Instance methods <ref/models/instances>` |
   :doc:`Accessing related objects <ref/models/relations>`
-
-* **Migrations:**
-  :doc:`Introduction to Migrations<topics/migrations>` |
-  :doc:`Operations reference <ref/migration-operations>` |
-  :doc:`SchemaEditor <ref/schema-editor>`
 
 * **Advanced:**
   :doc:`Managers <topics/db/managers>` |
@@ -85,15 +76,13 @@ manipulating the data of your Web application. Learn more about it below:
   :doc:`Transactions <topics/db/transactions>` |
   :doc:`Aggregation <topics/db/aggregation>` |
   :doc:`Custom fields <howto/custom-model-fields>` |
-  :doc:`Multiple databases <topics/db/multi-db>` |
-  :doc:`Custom lookups <howto/custom-lookups>`
+  :doc:`Multiple databases <topics/db/multi-db>`
 
 * **Other:**
   :doc:`Supported databases <ref/databases>` |
   :doc:`Legacy databases <howto/legacy-databases>` |
   :doc:`Providing initial data <howto/initial-data>` |
-  :doc:`Optimize database access <topics/db/optimization>` |
-  :doc:`PostgreSQL specific features <ref/contrib/postgres/index>`
+  :doc:`Optimize database access <topics/db/optimization>`
 
 The view layer
 ==============
@@ -185,26 +174,22 @@ testing of Django applications:
   :doc:`Overview <topics/settings>` |
   :doc:`Full list of settings <ref/settings>`
 
-* **Applications:**
-  :doc:`Overview <ref/applications>`
-
 * **Exceptions:**
   :doc:`Overview <ref/exceptions>`
 
-* **django-admin and manage.py:**
+* **django-admin.py and manage.py:**
   :doc:`Overview <ref/django-admin>` |
   :doc:`Adding custom commands <howto/custom-management-commands>`
 
 * **Testing:**
   :doc:`Introduction <topics/testing/index>` |
   :doc:`Writing and running tests <topics/testing/overview>` |
-  :doc:`Included testing tools <topics/testing/tools>` |
   :doc:`Advanced topics <topics/testing/advanced>`
 
 * **Deployment:**
   :doc:`Overview <howto/deployment/index>` |
   :doc:`WSGI servers <howto/deployment/wsgi/index>` |
-  :doc:`FastCGI/SCGI/AJP <howto/deployment/fastcgi>` (deprecated) |
+  :doc:`FastCGI/SCGI/AJP <howto/deployment/fastcgi>` |
   :doc:`Deploying static files <howto/static-files/deployment>` |
   :doc:`Tracking code errors by email <howto/error-reporting>`
 
@@ -229,7 +214,6 @@ applications and Django provides multiple protection tools and mechanisms:
 * :doc:`Clickjacking protection <ref/clickjacking>`
 * :doc:`Cross Site Request Forgery protection <ref/contrib/csrf>`
 * :doc:`Cryptographic signing <topics/signing>`
-* :ref:`Security Middleware <security-middleware>`
 
 Internationalization and localization
 =====================================
@@ -244,14 +228,6 @@ regions:
   :doc:`Localized Web UI formatting and form input <topics/i18n/formatting>`
 * :doc:`"Local flavor" <topics/localflavor>`
 * :doc:`Time zones </topics/i18n/timezones>`
-
-Performance and optimization
-============================
-
-There are a variety of techniques and tools that can help get your code running
-more efficiently - faster, and using fewer system resources.
-
-* :doc:`Performance and optimization overview <topics/performance>`
 
 Python compatibility
 ====================
@@ -298,7 +274,6 @@ Learn about some other core functionalities of the Django framework:
 * :doc:`Flatpages <ref/contrib/flatpages>`
 * :doc:`Redirects <ref/contrib/redirects>`
 * :doc:`Signals <topics/signals>`
-* :doc:`System check framework <topics/checks>`
 * :doc:`The sites framework <ref/contrib/sites>`
 * :doc:`Unicode in Django <ref/unicode>`
 
@@ -311,9 +286,7 @@ you can contribute:
 * **Community:**
   :doc:`How to get involved <internals/contributing/index>` |
   :doc:`The release process <internals/release-process>` |
-  :doc:`Team organization <internals/organization>` |
-  :doc:`Meet the team <internals/team>` |
-  :doc:`Current roles <internals/roles>` |
+  :doc:`Team of committers <internals/committers>` |
   :doc:`The Django source code repository <internals/git>` |
   :doc:`Security policies <internals/security>` |
   :doc:`Mailing lists <internals/mailing-lists>`

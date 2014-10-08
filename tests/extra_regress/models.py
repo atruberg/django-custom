@@ -30,11 +30,9 @@ class RevisionableModel(models.Model):
         new_revision.pk = None
         return new_revision
 
-
 class Order(models.Model):
     created_by = models.ForeignKey(User)
     text = models.TextField()
-
 
 @python_2_unicode_compatible
 class TestObject(models.Model):
@@ -43,4 +41,5 @@ class TestObject(models.Model):
     third = models.CharField(max_length=20)
 
     def __str__(self):
-        return 'TestObject: %s,%s,%s' % (self.first, self.second, self.third)
+        return 'TestObject: %s,%s,%s' % (self.first,self.second,self.third)
+

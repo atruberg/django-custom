@@ -95,10 +95,8 @@ class Child2(Parent1):
     def __str__(self):
         return self.name1
 
-
 class Child3(Child2):
     value3 = models.IntegerField()
-
 
 class Child4(Child1):
     value4 = models.IntegerField()

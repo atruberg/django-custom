@@ -3,7 +3,6 @@
 import os
 import sys
 
-
 def unique_messages():
     basedir = None
 

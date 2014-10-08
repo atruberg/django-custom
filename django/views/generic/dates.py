@@ -13,7 +13,6 @@ from django.views.generic.base import View
 from django.views.generic.detail import BaseDetailView, SingleObjectTemplateResponseMixin
 from django.views.generic.list import MultipleObjectMixin, MultipleObjectTemplateResponseMixin
 
-
 class YearMixin(object):
     """
     Mixin for views manipulating year-based data.
@@ -343,14 +342,7 @@ class BaseDateListView(MultipleObjectMixin, DateMixin, View):
         """
         raise NotImplementedError('A DateView must provide an implementation of get_dated_items()')
 
-    def get_ordering(self):
-        """
-        Returns the field or fields to use for ordering the queryset; uses the
-        date field by default.
-        """
-        return '-%s' % self.get_date_field() if self.ordering is None else self.ordering
-
-    def get_dated_queryset(self, **lookup):
+    def get_dated_queryset(self, ordering=None, **lookup):
         """
         Get a queryset properly filtered according to `allow_future` and any
         extra lookup kwargs.
@@ -360,6 +352,9 @@ class BaseDateListView(MultipleObjectMixin, DateMixin, View):
         allow_future = self.get_allow_future()
         allow_empty = self.get_allow_empty()
         paginate_by = self.get_paginate_by(qs)
+
+        if ordering is not None:
+            qs = qs.order_by(ordering)
 
         if not allow_future:
             now = timezone.now() if self.uses_datetime_field else timezone_today()
@@ -371,7 +366,7 @@ class BaseDateListView(MultipleObjectMixin, DateMixin, View):
             is_empty = len(qs) == 0 if paginate_by is None else not qs.exists()
             if is_empty:
                 raise Http404(_("No %(verbose_name_plural)s available") % {
-                    'verbose_name_plural': force_text(qs.model._meta.verbose_name_plural)
+                        'verbose_name_plural': force_text(qs.model._meta.verbose_name_plural)
                 })
 
         return qs
@@ -416,7 +411,7 @@ class BaseArchiveIndexView(BaseDateListView):
         """
         Return (date_list, items, extra_context) for this request.
         """
-        qs = self.get_dated_queryset()
+        qs = self.get_dated_queryset(ordering='-%s' % self.get_date_field())
         date_list = self.get_date_list(qs, ordering='DESC')
 
         if not date_list:
@@ -455,7 +450,7 @@ class BaseYearArchiveView(YearMixin, BaseDateListView):
             '%s__lt' % date_field: until,
         }
 
-        qs = self.get_dated_queryset(**lookup_kwargs)
+        qs = self.get_dated_queryset(ordering='-%s' % date_field, **lookup_kwargs)
         date_list = self.get_date_list(qs)
 
         if not self.get_make_object_list():
@@ -651,13 +646,10 @@ class BaseDateDetailView(YearMixin, MonthMixin, DayMixin, DateMixin, BaseDetailV
         qs = queryset or self.get_queryset()
 
         if not self.get_allow_future() and date > datetime.date.today():
-            raise Http404(_(
-                "Future %(verbose_name_plural)s not available because "
-                "%(class_name)s.allow_future is False.") % {
-                    'verbose_name_plural': qs.model._meta.verbose_name_plural,
-                    'class_name': self.__class__.__name__,
-                },
-            )
+            raise Http404(_("Future %(verbose_name_plural)s not available because %(class_name)s.allow_future is False.") % {
+                'verbose_name_plural': qs.model._meta.verbose_name_plural,
+                'class_name': self.__class__.__name__,
+            })
 
         # Filter down a queryset from self.queryset using the date from the
         # URL. This'll get passed as the queryset to DetailView.get_object,
@@ -705,7 +697,7 @@ def _get_next_prev(generic_view, date, is_previous, period):
 
         * If allow_empty and allow_future are both true, this is easy: just
           return the naive result (just the next/previous day/week/month,
-          regardless of object existence.)
+          reguardless of object existence.)
 
         * If allow_empty is true, allow_future is false, and the naive result
           isn't in the future, then return it; otherwise return None.

@@ -1,11 +1,8 @@
 from __future__ import unicode_literals
 
 import datetime
-import unittest
 
-from django.utils import feedgenerator
-from django.utils.timezone import get_fixed_timezone
-
+from django.utils import feedgenerator, tzinfo, unittest
 
 class FeedgeneratorTest(unittest.TestCase):
     """
@@ -43,7 +40,7 @@ class FeedgeneratorTest(unittest.TestCase):
         Test rfc2822_date() correctly formats datetime objects with tzinfo.
         """
         self.assertEqual(
-            feedgenerator.rfc2822_date(datetime.datetime(2008, 11, 14, 13, 37, 0, tzinfo=get_fixed_timezone(60))),
+            feedgenerator.rfc2822_date(datetime.datetime(2008, 11, 14, 13, 37, 0, tzinfo=tzinfo.FixedOffset(datetime.timedelta(minutes=60)))),
             "Fri, 14 Nov 2008 13:37:00 +0100"
         )
 
@@ -70,7 +67,7 @@ class FeedgeneratorTest(unittest.TestCase):
         Test rfc3339_date() correctly formats datetime objects with tzinfo.
         """
         self.assertEqual(
-            feedgenerator.rfc3339_date(datetime.datetime(2008, 11, 14, 13, 37, 0, tzinfo=get_fixed_timezone(120))),
+            feedgenerator.rfc3339_date(datetime.datetime(2008, 11, 14, 13, 37, 0, tzinfo=tzinfo.FixedOffset(datetime.timedelta(minutes=120)))),
             "2008-11-14T13:37:00+02:00"
         )
 

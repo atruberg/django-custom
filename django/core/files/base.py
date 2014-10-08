@@ -8,10 +8,9 @@ from django.core.files.utils import FileProxyMixin
 from django.utils import six
 from django.utils.encoding import force_bytes, python_2_unicode_compatible
 
-
 @python_2_unicode_compatible
 class File(FileProxyMixin):
-    DEFAULT_CHUNK_SIZE = 64 * 2 ** 10
+    DEFAULT_CHUNK_SIZE = 64 * 2**10
 
     def __init__(self, file, name=None):
         self.file = file
@@ -36,26 +35,19 @@ class File(FileProxyMixin):
     def __len__(self):
         return self.size
 
-    def _get_size_from_underlying_file(self):
-        if hasattr(self.file, 'size'):
-            return self.file.size
-        if hasattr(self.file, 'name'):
-            try:
-                return os.path.getsize(self.file.name)
-            except (OSError, TypeError):
-                pass
-        if hasattr(self.file, 'tell') and hasattr(self.file, 'seek'):
-            pos = self.file.tell()
-            self.file.seek(0, os.SEEK_END)
-            size = self.file.tell()
-            self.file.seek(pos)
-            return size
-        raise AttributeError("Unable to determine the file's size.")
-
     def _get_size(self):
-        if hasattr(self, '_size'):
-            return self._size
-        self._size = self._get_size_from_underlying_file()
+        if not hasattr(self, '_size'):
+            if hasattr(self.file, 'size'):
+                self._size = self.file.size
+            elif hasattr(self.file, 'name') and os.path.exists(self.file.name):
+                self._size = os.path.getsize(self.file.name)
+            elif hasattr(self.file, 'tell') and hasattr(self.file, 'seek'):
+                pos = self.file.tell()
+                self.file.seek(0, os.SEEK_END)
+                self._size = self.file.tell()
+                self.file.seek(pos)
+            else:
+                raise AttributeError("Unable to determine the file's size.")
         return self._size
 
     def _set_size(self, size):
@@ -135,7 +127,6 @@ class File(FileProxyMixin):
 
     def close(self):
         self.file.close()
-
 
 @python_2_unicode_compatible
 class ContentFile(File):

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from . import ValidationTestCase
 from .models import CustomMessagesModel
 
@@ -10,3 +12,4 @@ class CustomMessagesTest(ValidationTestCase):
     def test_custom_null_message(self):
         cmm = CustomMessagesModel()
         self.assertFieldFailsValidationWithMessage(cmm.full_clean, 'number', ['NULL'])
+

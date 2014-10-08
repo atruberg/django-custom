@@ -7,6 +7,5 @@ class CloseHookMixin(object):
     def close(self, **kwargs):
         self.closed = True
 
-
 class CacheClass(CloseHookMixin, LocMemCache):
     pass

@@ -1,7 +1,7 @@
-from django.conf.urls import url
+from django.conf.urls import patterns, url
 from django.http import HttpResponse
 
 
-urlpatterns = [
+urlpatterns = patterns('',
     url(r'^$', lambda req: HttpResponse('example view')),
-]
+)

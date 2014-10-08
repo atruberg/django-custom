@@ -15,13 +15,13 @@ introduce controlled coupling for convenience's sake.
 ``render``
 ==========
 
-.. function:: render(request, template_name[, dictionary][, context_instance][, content_type][, status][, current_app][, dirs])
+.. function:: render(request, template_name[, dictionary][, context_instance][, content_type][, status][, current_app])
 
    Combines a given template with a given context dictionary and returns an
    :class:`~django.http.HttpResponse` object with that rendered text.
 
    :func:`render()` is the same as a call to
-   :func:`render_to_response()` with a ``context_instance`` argument that
+   :func:`render_to_response()` with a `context_instance` argument that
    forces the use of a :class:`~django.template.RequestContext`.
 
    Django does not provide a shortcut function which returns a
@@ -55,6 +55,10 @@ Optional arguments
     The MIME type to use for the resulting document. Defaults to the value of
     the :setting:`DEFAULT_CONTENT_TYPE` setting.
 
+    .. versionchanged:: 1.5
+
+        This parameter used to be called ``mimetype``.
+
 ``status``
     The status code for the response. Defaults to ``200``.
 
@@ -62,13 +66,6 @@ Optional arguments
     A hint indicating which application contains the current view. See the
     :ref:`namespaced URL resolution strategy <topics-http-reversing-url-namespaces>`
     for more information.
-
-``dirs``
-    A tuple or list of values to override the :setting:`TEMPLATE_DIRS` setting.
-
-.. versionchanged:: 1.7
-
-   The ``dirs`` parameter was added.
 
 Example
 -------
@@ -95,19 +92,11 @@ This example is equivalent to::
         return HttpResponse(t.render(c),
             content_type="application/xhtml+xml")
 
-If you want to override the :setting:`TEMPLATE_DIRS` setting, use the
-``dirs`` parameter::
-
-    from django.shortcuts import render
-
-    def my_view(request):
-        # View code here...
-        return render(request, 'index.html', dirs=('custom_templates',))
 
 ``render_to_response``
 ======================
 
-.. function:: render_to_response(template_name[, dictionary][, context_instance][, content_type][, dirs])
+.. function:: render_to_response(template_name[, dictionary][, context_instance][, content_type])
 
    Renders a given template with a given context dictionary and returns an
    :class:`~django.http.HttpResponse` object with that rendered text.
@@ -145,12 +134,10 @@ Optional arguments
     The MIME type to use for the resulting document. Defaults to the value of
     the :setting:`DEFAULT_CONTENT_TYPE` setting.
 
-``dirs``
-    A tuple or list of values to override the :setting:`TEMPLATE_DIRS` setting.
+    .. versionchanged:: 1.5
 
-.. versionchanged:: 1.7
+        This parameter used to be called ``mimetype``.
 
-   The ``dirs`` parameter was added.
 
 Example
 -------
@@ -163,7 +150,7 @@ MIME type :mimetype:`application/xhtml+xml`::
     def my_view(request):
         # View code here...
         return render_to_response('myapp/index.html', {"foo": "bar"},
-            content_type="application/xhtml+xml")
+            mimetype="application/xhtml+xml")
 
 This example is equivalent to::
 
@@ -176,15 +163,6 @@ This example is equivalent to::
         c = Context({'foo': 'bar'})
         return HttpResponse(t.render(c),
             content_type="application/xhtml+xml")
-
-If you want to override the :setting:`TEMPLATE_DIRS` setting, use the
-``dirs`` parameter::
-
-    from django.shortcuts import render_to_response
-
-    def my_view(request):
-        # View code here...
-        return render_to_response('index.html', dirs=('custom_templates',))
 
 ``redirect``
 ============
@@ -203,15 +181,10 @@ If you want to override the :setting:`TEMPLATE_DIRS` setting, use the
      <django.core.urlresolvers.reverse>` will be used to reverse-resolve the
      name.
 
-   * An absolute or relative URL, which will be used as-is for the redirect
-     location.
+   * A URL, which will be used as-is for the redirect location.
 
    By default issues a temporary redirect; pass ``permanent=True`` to issue a
-   permanent redirect.
-
-   .. versionchanged:: 1.7
-
-       The ability to use relative URLs was added.
+   permanent redirect
 
 Examples
 --------

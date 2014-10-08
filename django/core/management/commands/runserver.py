@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from optparse import make_option
 from datetime import datetime
 import errno
 import os
@@ -9,12 +10,8 @@ import socket
 
 from django.core.management.base import BaseCommand, CommandError
 from django.core.servers.basehttp import run, get_internal_wsgi_application
-from django.db import connections, DEFAULT_DB_ALIAS
-from django.db.migrations.executor import MigrationExecutor
 from django.utils import autoreload
-from django.utils.encoding import get_system_encoding
 from django.utils import six
-from django.core.exceptions import ImproperlyConfigured
 
 naiveip_re = re.compile(r"""^(?:
 (?P<addr>
@@ -26,20 +23,19 @@ DEFAULT_PORT = "8000"
 
 
 class Command(BaseCommand):
+    option_list = BaseCommand.option_list + (
+        make_option('--ipv6', '-6', action='store_true', dest='use_ipv6', default=False,
+            help='Tells Django to use a IPv6 address.'),
+        make_option('--nothreading', action='store_false', dest='use_threading', default=True,
+            help='Tells Django to NOT use threading.'),
+        make_option('--noreload', action='store_false', dest='use_reloader', default=True,
+            help='Tells Django to NOT use the auto-reloader.'),
+    )
     help = "Starts a lightweight Web server for development."
+    args = '[optional port number, or ipaddr:port]'
 
     # Validation is called explicitly each time the server is reloaded.
-    requires_system_checks = False
-
-    def add_arguments(self, parser):
-        parser.add_argument('addrport', nargs='?',
-            help='Optional port number, or ipaddr:port')
-        parser.add_argument('--ipv6', '-6', action='store_true', dest='use_ipv6', default=False,
-            help='Tells Django to use an IPv6 address.')
-        parser.add_argument('--nothreading', action='store_false', dest='use_threading', default=True,
-            help='Tells Django to NOT use threading.')
-        parser.add_argument('--noreload', action='store_false', dest='use_reloader', default=True,
-            help='Tells Django to NOT use the auto-reloader.')
+    requires_model_validation = False
 
     def get_handler(self, *args, **options):
         """
@@ -47,7 +43,7 @@ class Command(BaseCommand):
         """
         return get_internal_wsgi_application()
 
-    def handle(self, *args, **options):
+    def handle(self, addrport='', *args, **options):
         from django.conf import settings
 
         if not settings.DEBUG and not settings.ALLOWED_HOSTS:
@@ -56,15 +52,17 @@ class Command(BaseCommand):
         self.use_ipv6 = options.get('use_ipv6')
         if self.use_ipv6 and not socket.has_ipv6:
             raise CommandError('Your Python does not support IPv6.')
+        if args:
+            raise CommandError('Usage is runserver %s' % self.args)
         self._raw_ipv6 = False
-        if not options.get('addrport'):
+        if not addrport:
             self.addr = ''
             self.port = DEFAULT_PORT
         else:
-            m = re.match(naiveip_re, options['addrport'])
+            m = re.match(naiveip_re, addrport)
             if m is None:
                 raise CommandError('"%s" is not a valid port number '
-                                   'or address:port pair.' % options['addrport'])
+                                   'or address:port pair.' % addrport)
             self.addr, _ipv4, _ipv6, _fqdn, self.port = m.groups()
             if not self.port.isdigit():
                 raise CommandError("%r is not a valid port number." % self.port)
@@ -78,18 +76,18 @@ class Command(BaseCommand):
         if not self.addr:
             self.addr = '::1' if self.use_ipv6 else '127.0.0.1'
             self._raw_ipv6 = bool(self.use_ipv6)
-        self.run(**options)
+        self.run(*args, **options)
 
-    def run(self, **options):
+    def run(self, *args, **options):
         """
         Runs the server, using the autoreloader if needed
         """
         use_reloader = options.get('use_reloader')
 
         if use_reloader:
-            autoreload.main(self.inner_run, None, options)
+            autoreload.main(self.inner_run, args, options)
         else:
-            self.inner_run(None, **options)
+            self.inner_run(*args, **options)
 
     def inner_run(self, *args, **options):
         from django.conf import settings
@@ -99,15 +97,12 @@ class Command(BaseCommand):
         shutdown_message = options.get('shutdown_message', '')
         quit_command = 'CTRL-BREAK' if sys.platform == 'win32' else 'CONTROL-C'
 
-        self.stdout.write("Performing system checks...\n\n")
+        self.stdout.write("Validating models...\n\n")
         self.validate(display_num_errors=True)
-        try:
-            self.check_migrations()
-        except ImproperlyConfigured:
-            pass
         now = datetime.now().strftime('%B %d, %Y - %X')
         if six.PY2:
-            now = now.decode(get_system_encoding())
+            now = now.decode('utf-8')
+
         self.stdout.write((
             "%(started_at)s\n"
             "Django version %(version)s, using settings %(settings)r\n"
@@ -149,18 +144,6 @@ class Command(BaseCommand):
                 self.stdout.write(shutdown_message)
             sys.exit(0)
 
-    def check_migrations(self):
-        """
-        Checks to see if the set of migrations on disk matches the
-        migrations in the database. Prints a warning if they don't match.
-        """
-        executor = MigrationExecutor(connections[DEFAULT_DB_ALIAS])
-        plan = executor.migration_plan(executor.loader.graph.leaf_nodes())
-        if plan:
-            self.stdout.write(self.style.NOTICE(
-                "\nYou have unapplied migrations; your app may not work properly until they are applied."
-            ))
-            self.stdout.write(self.style.NOTICE("Run 'python manage.py migrate' to apply them.\n"))
 
 # Kept for backward compatibility
 BaseRunserverCommand = Command

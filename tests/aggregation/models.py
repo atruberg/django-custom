@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -12,7 +12,6 @@ class Author(models.Model):
     def __str__(self):
         return self.name
 
-
 @python_2_unicode_compatible
 class Publisher(models.Model):
     name = models.CharField(max_length=255)
@@ -20,7 +19,6 @@ class Publisher(models.Model):
 
     def __str__(self):
         return self.name
-
 
 @python_2_unicode_compatible
 class Book(models.Model):
@@ -37,7 +35,6 @@ class Book(models.Model):
     def __str__(self):
         return self.name
 
-
 @python_2_unicode_compatible
 class Store(models.Model):
     name = models.CharField(max_length=255)
@@ -47,3 +44,4 @@ class Store(models.Model):
 
     def __str__(self):
         return self.name
+

@@ -1,10 +1,9 @@
-from django.test import TestCase, override_settings
+from django.test.testcases import TestCase
 from django.contrib.messages.tests.urls import ContactFormViewWithMsg
 from django.core.urlresolvers import reverse
 
-
-@override_settings(ROOT_URLCONF='django.contrib.messages.tests.urls')
 class SuccessMessageMixinTests(TestCase):
+    urls = 'django.contrib.messages.tests.urls'
 
     def test_set_messages_success(self):
         author = {'name': 'John Doe',

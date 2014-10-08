@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from django.test import TestCase
 
 from .models import Person
@@ -20,3 +22,4 @@ class ChoicesTests(TestCase):
 
         a.gender = 'U'
         self.assertEqual(a.get_gender_display(), 'U')
+

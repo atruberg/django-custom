@@ -1,8 +1,7 @@
 from __future__ import unicode_literals
 
-import unittest
-
 from django.utils import regex_helper
+from django.utils import unittest
 
 
 class NormalizeTests(unittest.TestCase):

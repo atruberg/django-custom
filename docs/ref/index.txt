@@ -5,8 +5,6 @@ API Reference
 .. toctree::
    :maxdepth: 1
 
-   applications
-   checks
    class-based-views/index
    clickjacking
    contrib/index
@@ -16,14 +14,12 @@ API Reference
    files/index
    forms/index
    middleware
-   migration-operations
    models/index
    request-response
-   schema-editor
+   template-response
    settings
    signals
    templates/index
-   template-response
    unicode
    urlresolvers
    urls

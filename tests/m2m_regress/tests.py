@@ -1,11 +1,11 @@
-from __future__ import unicode_literals
+from __future__ import absolute_import
 
 from django.core.exceptions import FieldError
 from django.test import TestCase
 from django.utils import six
 
 from .models import (SelfRefer, Tag, TagCollection, Entry, SelfReferChild,
-    SelfReferChildSibling, Worksheet, RegressionModelSplit)
+    SelfReferChildSibling, Worksheet, RegressionModelSplit, Line)
 
 
 class M2MRegressionTests(TestCase):
@@ -36,8 +36,7 @@ class M2MRegressionTests(TestCase):
         # The secret internal related names for self-referential many-to-many
         # fields shouldn't appear in the list when an error is made.
 
-        six.assertRaisesRegex(
-            self, FieldError,
+        six.assertRaisesRegex(self, FieldError,
             "Choices are: id, name, references, related, selfreferchild, selfreferchildsibling$",
             lambda: SelfRefer.objects.filter(porcupine='fred')
         )
@@ -97,3 +96,16 @@ class M2MRegressionTests(TestCase):
         # causes a TypeError in add_lazy_relation
         m1 = RegressionModelSplit(name='1')
         m1.save()
+
+    def test_m2m_filter(self):
+        worksheet = Worksheet.objects.create(id=1)
+        line_hi = Line.objects.create(name="hi")
+        line_bye = Line.objects.create(name="bye")
+
+        worksheet.lines = [line_hi, line_bye]
+        hi = worksheet.lines.filter(name="hi")
+
+        worksheet.lines = hi
+        self.assertEqual(1, worksheet.lines.count())
+        self.assertEqual(1, hi.count())
+

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding: utf-8
 from django.contrib import admin
 from django.db import models
 
@@ -11,7 +11,6 @@ class Band(models.Model):
     class Meta:
         ordering = ('name',)
 
-
 class Song(models.Model):
     band = models.ForeignKey(Band)
     name = models.CharField(max_length=100)
@@ -21,15 +20,12 @@ class Song(models.Model):
     class Meta:
         ordering = ('name',)
 
-
 class SongInlineDefaultOrdering(admin.StackedInline):
     model = Song
-
 
 class SongInlineNewOrdering(admin.StackedInline):
     model = Song
     ordering = ('duration', )
-
 
 class DynOrderingBandAdmin(admin.ModelAdmin):
 

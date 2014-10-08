@@ -22,8 +22,7 @@ class MyWrapper(object):
             return self.value == other.value
         return self.value == other
 
-
-class MyAutoField(models.CharField):
+class MyAutoField(six.with_metaclass(models.SubfieldBase, models.CharField)):
 
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = 10
@@ -42,11 +41,6 @@ class MyAutoField(models.CharField):
         if not isinstance(value, MyWrapper):
             value = MyWrapper(value)
         return value
-
-    def from_db_value(self, value, connection):
-        if not value:
-            return
-        return MyWrapper(value)
 
     def get_db_prep_save(self, value, connection):
         if not value:

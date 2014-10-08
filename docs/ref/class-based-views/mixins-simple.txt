@@ -7,6 +7,8 @@ ContextMixin
 
 .. class:: django.views.generic.base.ContextMixin
 
+    .. versionadded:: 1.5
+
     **Methods**
 
     .. method:: get_context_data(**kwargs)
@@ -74,6 +76,8 @@ TemplateResponseMixin
         ``response_class``.
 
     .. attribute:: content_type
+
+        .. versionadded:: 1.5
 
         The content type to use for the response. ``content_type`` is passed
         as a keyword argument to ``response_class``. Default is ``None`` --

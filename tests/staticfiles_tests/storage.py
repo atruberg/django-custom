@@ -2,7 +2,6 @@ from datetime import datetime
 from django.core.files import storage
 from django.contrib.staticfiles.storage import CachedStaticFilesStorage
 
-
 class DummyStorage(storage.Storage):
     """
     A storage class that does implement modified_time() but raises

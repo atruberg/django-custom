@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from django.test import TestCase
 
 from .models import Parent
@@ -12,7 +14,7 @@ class MutuallyReferentialTests(TestCase):
 
         # Create some children
         c = q.child_set.create(name='Charles')
-        q.child_set.create(name='Edward')
+        e = q.child_set.create(name='Edward')
 
         # Set the best child
         # No assertion require here; if basic assignment and

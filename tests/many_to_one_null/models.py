@@ -1,5 +1,5 @@
 """
-Many-to-one relationships that can be null
+16. Many-to-one relationships that can be null
 
 To define a many-to-one relationship that can have a null foreign key, use
 ``ForeignKey()`` with ``null=True`` .
@@ -16,7 +16,6 @@ class Reporter(models.Model):
     def __str__(self):
         return self.name
 
-
 @python_2_unicode_compatible
 class Article(models.Model):
     headline = models.CharField(max_length=100)
@@ -27,11 +26,3 @@ class Article(models.Model):
 
     def __str__(self):
         return self.headline
-
-
-class Car(models.Model):
-    make = models.CharField(max_length=100, null=True, unique=True)
-
-
-class Driver(models.Model):
-    car = models.ForeignKey(Car, to_field='make', null=True, related_name='drivers')

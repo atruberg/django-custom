@@ -1,10 +1,47 @@
+import warnings
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser, Group, Permission, User, UserManager
+from django.contrib.auth.models import (Group, User, SiteProfileNotAvailable,
+    UserManager)
+from django.contrib.auth.tests.custom_user import IsActiveTestUser1
 from django.contrib.auth.tests.utils import skipIfCustomUser
-from django.contrib.contenttypes.models import ContentType
-from django.core import mail
 from django.db.models.signals import post_save
-from django.test import TestCase, override_settings
+from django.test import TestCase
+from django.test.utils import override_settings
+from django.utils import six
+
+
+@skipIfCustomUser
+@override_settings(USE_TZ=False, AUTH_PROFILE_MODULE='')
+class ProfileTestCase(TestCase):
+
+    def test_site_profile_not_available(self):
+        user = User.objects.create(username='testclient')
+
+        # calling get_profile without AUTH_PROFILE_MODULE set
+        del settings.AUTH_PROFILE_MODULE
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            with six.assertRaisesRegex(self, SiteProfileNotAvailable,
+                    "You need to set AUTH_PROFILE_MODULE in your project"):
+                user.get_profile()
+
+        # Bad syntax in AUTH_PROFILE_MODULE:
+        settings.AUTH_PROFILE_MODULE = 'foobar'
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            with six.assertRaisesRegex(self, SiteProfileNotAvailable,
+                    "app_label and model_name should be separated by a dot"):
+                user.get_profile()
+
+        # module that doesn't exist
+        settings.AUTH_PROFILE_MODULE = 'foo.bar'
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            with six.assertRaisesRegex(self, SiteProfileNotAvailable,
+                    "Unable to load the profile model"):
+                user.get_profile()
 
 
 @skipIfCustomUser
@@ -44,64 +81,6 @@ class LoadDataWithNaturalKeysTestCase(TestCase):
         self.assertEqual(group, user.groups.get())
 
 
-class LoadDataWithNaturalKeysAndMultipleDatabasesTestCase(TestCase):
-    multi_db = True
-
-    def test_load_data_with_user_permissions(self):
-        # Create test contenttypes for both databases
-        default_objects = [
-            ContentType.objects.db_manager('default').create(
-                model='examplemodela',
-                name='example model a',
-                app_label='app_a',
-            ),
-            ContentType.objects.db_manager('default').create(
-                model='examplemodelb',
-                name='example model b',
-                app_label='app_b',
-            ),
-        ]
-        other_objects = [
-            ContentType.objects.db_manager('other').create(
-                model='examplemodelb',
-                name='example model b',
-                app_label='app_b',
-            ),
-            ContentType.objects.db_manager('other').create(
-                model='examplemodela',
-                name='example model a',
-                app_label='app_a',
-            ),
-        ]
-
-        # Now we create the test UserPermission
-        Permission.objects.db_manager("default").create(
-            name="Can delete example model b",
-            codename="delete_examplemodelb",
-            content_type=default_objects[1],
-        )
-        Permission.objects.db_manager("other").create(
-            name="Can delete example model b",
-            codename="delete_examplemodelb",
-            content_type=other_objects[0],
-        )
-
-        perm_default = Permission.objects.get_by_natural_key(
-            'delete_examplemodelb',
-            'app_b',
-            'examplemodelb',
-        )
-
-        perm_other = Permission.objects.db_manager('other').get_by_natural_key(
-            'delete_examplemodelb',
-            'app_b',
-            'examplemodelb',
-        )
-
-        self.assertEqual(perm_default.content_type_id, default_objects[1].id)
-        self.assertEqual(perm_other.content_type_id, other_objects[0].id)
-
-
 @skipIfCustomUser
 class UserManagerTestCase(TestCase):
 
@@ -127,41 +106,9 @@ class UserManagerTestCase(TestCase):
         self.assertEqual(returned, 'email\ with_whitespace@d.com')
 
     def test_empty_username(self):
-        self.assertRaisesMessage(
-            ValueError,
-            'The given username must be set',
-            User.objects.create_user, username=''
-        )
-
-
-class AbstractUserTestCase(TestCase):
-    def test_email_user(self):
-        # valid send_mail parameters
-        kwargs = {
-            "fail_silently": False,
-            "auth_user": None,
-            "auth_password": None,
-            "connection": None,
-            "html_message": None,
-        }
-        abstract_user = AbstractUser(email='foo@bar.com')
-        abstract_user.email_user(subject="Subject here",
-            message="This is a message", from_email="from@domain.com", **kwargs)
-        # Test that one message has been sent.
-        self.assertEqual(len(mail.outbox), 1)
-        # Verify that test email contains the correct attributes:
-        message = mail.outbox[0]
-        self.assertEqual(message.subject, "Subject here")
-        self.assertEqual(message.body, "This is a message")
-        self.assertEqual(message.from_email, "from@domain.com")
-        self.assertEqual(message.to, [abstract_user.email])
-
-    def test_last_login_default(self):
-        user1 = User.objects.create(username='user1')
-        self.assertIsNone(user1.last_login)
-
-        user2 = User.objects.create_user(username='user2')
-        self.assertIsNone(user2.last_login)
+        self.assertRaisesMessage(ValueError,
+                                 'The given username must be set',
+                                  User.objects.create_user, username='')
 
 
 class IsActiveTestCase(TestCase):

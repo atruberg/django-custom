@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 # Unittests for fixtures.
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import json
 import os
 import re
 import warnings
 
-from django.core import serializers
 from django.core.serializers.base import DeserializationError
 from django.core import management
 from django.core.management.base import CommandError
@@ -16,7 +15,7 @@ from django.db import transaction, IntegrityError
 from django.db.models import signals
 from django.test import (TestCase, TransactionTestCase, skipIfDBFeature,
     skipUnlessDBFeature)
-from django.test import override_settings
+from django.test.utils import override_settings
 from django.utils.encoding import force_text
 from django.utils._os import upath
 from django.utils import six
@@ -24,12 +23,7 @@ from django.utils.six import PY3, StringIO
 
 from .models import (Animal, Stuff, Absolute, Parent, Child, Article, Widget,
     Store, Person, Book, NKChild, RefToNKChild, Circle1, Circle2, Circle3,
-    ExternalDependency, Thingy,
-    M2MSimpleA, M2MSimpleB, M2MSimpleCircularA, M2MSimpleCircularB,
-    M2MComplexA, M2MComplexB, M2MThroughAB, M2MComplexCircular1A,
-    M2MComplexCircular1B, M2MComplexCircular1C, M2MCircular1ThroughAB,
-    M2MCircular1ThroughBC, M2MCircular1ThroughCA, M2MComplexCircular2A,
-    M2MComplexCircular2B, M2MCircular2ThroughAB)
+    ExternalDependency, Thingy)
 
 _cur_dir = os.path.dirname(os.path.abspath(upath(__file__)))
 
@@ -70,7 +64,7 @@ class TestFixtures(TestCase):
     def test_loaddata_not_found_fields_not_ignore(self):
         """
         Test for ticket #9279 -- Error is raised for entries in
-        the serialized data for fields that have been removed
+        the serialised data for fields that have been removed
         from the database when not ignored.
         """
         with self.assertRaises(DeserializationError):
@@ -83,7 +77,7 @@ class TestFixtures(TestCase):
     def test_loaddata_not_found_fields_ignore(self):
         """
         Test for ticket #9279 -- Ignores entries in
-        the serialized data for fields that have been removed
+        the serialised data for fields that have been removed
         from the database.
         """
         management.call_command(
@@ -96,7 +90,7 @@ class TestFixtures(TestCase):
 
     def test_loaddata_not_found_fields_ignore_xml(self):
         """
-        Test for ticket #19998 -- Ignore entries in the XML serialized data
+        Test for ticket #19998 -- Ignore entries in the XML serialised data
         for fields that have been removed from the model definition.
         """
         management.call_command(
@@ -215,68 +209,55 @@ class TestFixtures(TestCase):
         """
         Test for ticket #4371 -- Loading a fixture file with invalid data
         using explicit filename.
-        Test for ticket #18213 -- warning conditions are caught correctly
+        Validate that error conditions are caught correctly
         """
-        with warnings.catch_warnings(record=True) as warning_list:
-            warnings.simplefilter("always")
+        with six.assertRaisesRegex(self, management.CommandError,
+                "No fixture data found for 'bad_fixture2'. \(File format may be invalid.\)"):
             management.call_command(
                 'loaddata',
                 'bad_fixture2.xml',
                 verbosity=0,
             )
-            warning = warning_list.pop()
-            self.assertEqual(warning.category, RuntimeWarning)
-            self.assertEqual(str(warning.message), "No fixture data found for 'bad_fixture2'. (File format may be invalid.)")
 
     def test_invalid_data_no_ext(self):
         """
         Test for ticket #4371 -- Loading a fixture file with invalid data
         without file extension.
-        Test for ticket #18213 -- warning conditions are caught correctly
+        Validate that error conditions are caught correctly
         """
-        with warnings.catch_warnings(record=True) as warning_list:
-            warnings.simplefilter("always")
+        with six.assertRaisesRegex(self, management.CommandError,
+                "No fixture data found for 'bad_fixture2'. \(File format may be invalid.\)"):
             management.call_command(
                 'loaddata',
                 'bad_fixture2',
                 verbosity=0,
             )
-            warning = warning_list.pop()
-            self.assertEqual(warning.category, RuntimeWarning)
-            self.assertEqual(str(warning.message), "No fixture data found for 'bad_fixture2'. (File format may be invalid.)")
 
     def test_empty(self):
         """
-        Test for ticket #18213 -- Loading a fixture file with no data output a warning.
-        Previously empty fixture raises an error exception, see ticket #4371.
+        Test for ticket #4371 -- Loading a fixture file with no data returns an error.
+        Validate that error conditions are caught correctly
         """
-        with warnings.catch_warnings(record=True) as warning_list:
-            warnings.simplefilter("always")
+        with six.assertRaisesRegex(self, management.CommandError,
+                "No fixture data found for 'empty'. \(File format may be invalid.\)"):
             management.call_command(
                 'loaddata',
                 'empty',
                 verbosity=0,
             )
-            warning = warning_list.pop()
-            self.assertEqual(warning.category, RuntimeWarning)
-            self.assertEqual(str(warning.message), "No fixture data found for 'empty'. (File format may be invalid.)")
 
     def test_error_message(self):
         """
-        Regression for #9011 - error message is correct.
-        Change from error to warning for ticket #18213.
+        (Regression for #9011 - error message is correct)
         """
-        with warnings.catch_warnings(record=True) as warning_list:
-            warnings.simplefilter("always")
+        with six.assertRaisesRegex(self, management.CommandError,
+                "^No fixture data found for 'bad_fixture2'. \(File format may be invalid.\)$"):
             management.call_command(
                 'loaddata',
                 'bad_fixture2',
                 'animal',
                 verbosity=0,
             )
-            warning = warning_list.pop()
-            self.assertEqual(warning.category, RuntimeWarning)
-            self.assertEqual(str(warning.message), "No fixture data found for 'bad_fixture2'. (File format may be invalid.)")
 
     def test_pg_sequence_resetting_checks(self):
         """
@@ -378,7 +359,7 @@ class TestFixtures(TestCase):
 
         # Get rid of artifacts like '000000002' to eliminate the differences
         # between different Python versions.
-        data = re.sub('0{6,}[0-9]', '', data)
+        data = re.sub('0{6,}\d', '', data)
 
         animals_data = sorted([
             {"pk": 1, "model": "fixtures_regress.animal", "fields": {"count": 3, "weight": 1.2, "name": "Lion", "latin_name": "Panthera leo"}},
@@ -390,6 +371,7 @@ class TestFixtures(TestCase):
 
         self.maxDiff = 1024
         self.assertEqual(data, animals_data)
+
 
     def test_proxy_model_included(self):
         """
@@ -409,9 +391,8 @@ class TestFixtures(TestCase):
             stdout.getvalue(),
             """[{"pk": %d, "model": "fixtures_regress.widget", "fields": {"name": "grommet"}}]"""
             % widget.pk
-        )
+            )
 
-    @skipUnlessDBFeature('supports_forward_references')
     def test_loaddata_works_when_fixture_has_forward_refs(self):
         """
         Regression for #3615 - Forward references cause fixtures not to load in MySQL (InnoDB)
@@ -436,7 +417,6 @@ class TestFixtures(TestCase):
                 verbosity=0,
             )
 
-    @skipUnlessDBFeature('supports_forward_references')
     @override_settings(FIXTURE_DIRS=[os.path.join(_cur_dir, 'fixtures_1'),
                                      os.path.join(_cur_dir, 'fixtures_2')])
     def test_loaddata_forward_refs_split_fixtures(self):
@@ -485,18 +465,6 @@ class TestFixtures(TestCase):
         management.call_command(
             'loaddata',
             'special-article.json',
-            verbosity=0,
-        )
-
-    def test_ticket_22421(self):
-        """
-        Regression for ticket #22421 -- loaddata on a model that inherits from
-        a grand-parent model with a M2M but via an abstract parent shouldn't
-        blow up.
-        """
-        management.call_command(
-            'loaddata',
-            'feature.json',
             verbosity=0,
         )
 
@@ -566,7 +534,7 @@ class NaturalKeyFixtureTests(TestCase):
             'loaddata',
             'forward_ref_lookup.json',
             verbosity=0,
-        )
+            )
 
         stdout = StringIO()
         management.call_command(
@@ -576,13 +544,12 @@ class NaturalKeyFixtureTests(TestCase):
             'fixtures_regress.store',
             verbosity=0,
             format='json',
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True,
+            use_natural_keys=True,
             stdout=stdout,
         )
         self.assertJSONEqual(
             stdout.getvalue(),
-            """[{"fields": {"main": null, "name": "Amazon"}, "model": "fixtures_regress.store"}, {"fields": {"main": null, "name": "Borders"}, "model": "fixtures_regress.store"}, {"fields": {"name": "Neal Stephenson"}, "model": "fixtures_regress.person"}, {"pk": 1, "model": "fixtures_regress.book", "fields": {"stores": [["Amazon"], ["Borders"]], "name": "Cryptonomicon", "author": ["Neal Stephenson"]}}]"""
+            """[{"pk": 2, "model": "fixtures_regress.store", "fields": {"main": null, "name": "Amazon"}}, {"pk": 3, "model": "fixtures_regress.store", "fields": {"main": null, "name": "Borders"}}, {"pk": 4, "model": "fixtures_regress.person", "fields": {"name": "Neal Stephenson"}}, {"pk": 1, "model": "fixtures_regress.book", "fields": {"stores": [["Amazon"], ["Borders"]], "name": "Cryptonomicon", "author": ["Neal Stephenson"]}}]"""
         )
 
     def test_dependency_sorting(self):
@@ -720,121 +687,6 @@ class NaturalKeyFixtureTests(TestCase):
             books.__repr__(),
             """[<Book: Cryptonomicon by Neal Stephenson (available at Amazon, Borders)>, <Book: Ender's Game by Orson Scott Card (available at Collins Bookstore)>, <Book: Permutation City by Greg Egan (available at Angus and Robertson)>]"""
         )
-
-
-class M2MNaturalKeyFixtureTests(TestCase):
-    """Tests for ticket #14426."""
-
-    def test_dependency_sorting_m2m_simple(self):
-        """
-        M2M relations without explicit through models SHOULD count as dependencies
-
-        Regression test for bugs that could be caused by flawed fixes to
-        #14226, namely if M2M checks are removed from sort_dependencies
-        altogether.
-        """
-        sorted_deps = sort_dependencies(
-            [('fixtures_regress', [M2MSimpleA, M2MSimpleB])]
-        )
-        self.assertEqual(sorted_deps, [M2MSimpleB, M2MSimpleA])
-
-    def test_dependency_sorting_m2m_simple_circular(self):
-        """
-        Resolving circular M2M relations without explicit through models should
-        fail loudly
-        """
-        self.assertRaisesMessage(
-            CommandError,
-            "Can't resolve dependencies for fixtures_regress.M2MSimpleCircularA, "
-            "fixtures_regress.M2MSimpleCircularB in serialized app list.",
-            sort_dependencies,
-            [('fixtures_regress', [M2MSimpleCircularA, M2MSimpleCircularB])]
-        )
-
-    def test_dependency_sorting_m2m_complex(self):
-        """
-        M2M relations with explicit through models should NOT count as
-        dependencies.  The through model itself will have dependencies, though.
-        """
-        sorted_deps = sort_dependencies(
-            [('fixtures_regress', [M2MComplexA, M2MComplexB, M2MThroughAB])]
-        )
-        # Order between M2MComplexA and M2MComplexB doesn't matter. The through
-        # model has dependencies to them though, so it should come last.
-        self.assertEqual(sorted_deps[-1], M2MThroughAB)
-
-    def test_dependency_sorting_m2m_complex_circular_1(self):
-        """
-        Circular M2M relations with explicit through models should be serializable
-        """
-        A, B, C, AtoB, BtoC, CtoA = (M2MComplexCircular1A, M2MComplexCircular1B,
-                                     M2MComplexCircular1C, M2MCircular1ThroughAB,
-                                     M2MCircular1ThroughBC, M2MCircular1ThroughCA)
-        try:
-            sorted_deps = sort_dependencies(
-                [('fixtures_regress', [A, B, C, AtoB, BtoC, CtoA])]
-            )
-        except CommandError:
-            self.fail("Serialization dependency solving algorithm isn't "
-                      "capable of handling circular M2M setups with "
-                      "intermediate models.")
-
-        # The dependency sorting should not result in an error, and the
-        # through model should have dependencies to the other models and as
-        # such come last in the list.
-        self.assertEqual(sorted_deps[:3], [A, B, C])
-        self.assertEqual(sorted_deps[3:], [AtoB, BtoC, CtoA])
-
-    def test_dependency_sorting_m2m_complex_circular_2(self):
-        """
-        Circular M2M relations with explicit through models should be serializable
-        This test tests the circularity with explicit natural_key.dependencies
-        """
-        try:
-            sorted_deps = sort_dependencies([
-                ('fixtures_regress', [
-                    M2MComplexCircular2A,
-                    M2MComplexCircular2B,
-                    M2MCircular2ThroughAB])
-            ])
-        except CommandError:
-            self.fail("Serialization dependency solving algorithm isn't "
-                      "capable of handling circular M2M setups with "
-                      "intermediate models plus natural key dependency hints.")
-        self.assertEqual(sorted_deps[:2], [M2MComplexCircular2A, M2MComplexCircular2B])
-        self.assertEqual(sorted_deps[2:], [M2MCircular2ThroughAB])
-
-    def test_dump_and_load_m2m_simple(self):
-        """
-        Test serializing and deserializing back models with simple M2M relations
-        """
-        a = M2MSimpleA.objects.create(data="a")
-        b1 = M2MSimpleB.objects.create(data="b1")
-        b2 = M2MSimpleB.objects.create(data="b2")
-        a.b_set.add(b1)
-        a.b_set.add(b2)
-
-        stdout = StringIO()
-        management.call_command(
-            'dumpdata',
-            'fixtures_regress.M2MSimpleA',
-            'fixtures_regress.M2MSimpleB',
-            use_natural_foreign_keys=True,
-            stdout=stdout
-        )
-
-        for model in [M2MSimpleA, M2MSimpleB]:
-            model.objects.all().delete()
-
-        objects = serializers.deserialize("json", stdout.getvalue())
-        for obj in objects:
-            obj.save()
-
-        new_a = M2MSimpleA.objects.get_by_natural_key("a")
-        self.assertQuerysetEqual(new_a.b_set.all(), [
-            "<M2MSimpleB: b1>",
-            "<M2MSimpleB: b2>"
-        ], ordered=False)
 
 
 class TestTicket11101(TransactionTestCase):

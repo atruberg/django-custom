@@ -19,7 +19,6 @@ class Article(models.Model):
         return "nothing"
     test_from_model_with_override.short_description = "not What you Expect"
 
-
 @python_2_unicode_compatible
 class Count(models.Model):
     num = models.PositiveSmallIntegerField()
@@ -28,14 +27,11 @@ class Count(models.Model):
     def __str__(self):
         return six.text_type(self.num)
 
-
 class Event(models.Model):
     date = models.DateTimeField(auto_now_add=True)
 
-
 class Location(models.Model):
     event = models.OneToOneField(Event, verbose_name='awesome event')
-
 
 class Guest(models.Model):
     event = models.OneToOneField(Event)
@@ -44,21 +40,5 @@ class Guest(models.Model):
     class Meta:
         verbose_name = "awesome guest"
 
-
 class EventGuide(models.Model):
     event = models.ForeignKey(Event, on_delete=models.DO_NOTHING)
-
-
-class Vehicle(models.Model):
-    pass
-
-
-class VehicleMixin(Vehicle):
-    vehicle = models.OneToOneField(Vehicle, parent_link=True, related_name='vehicle_%(app_label)s_%(class)s')
-
-    class Meta:
-        abstract = True
-
-
-class Car(VehicleMixin):
-    pass

@@ -36,9 +36,7 @@ development:
 
 * :doc:`Submit patches <writing-code/submitting-patches>` for new and/or
   fixed behavior. If you're looking for an easy way to start contributing
-  to Django read the :doc:`/intro/contributing` tutorial and have a look at the
-  `easy pickings`_ tickets. The :ref:`patch-review-checklist` will also be
-  helpful.
+  to Django have a look at the `easy pickings`_ tickets.
 
 * :doc:`Improve the documentation <writing-documentation>` or
   :doc:`write unit tests <writing-code/unit-tests>`.

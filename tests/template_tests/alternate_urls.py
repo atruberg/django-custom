@@ -1,12 +1,16 @@
-from django.conf.urls import url
+# coding: utf-8
+
+from __future__ import absolute_import
+
+from django.conf.urls import patterns, url
 
 from . import views
 
 
-urlpatterns = [
+urlpatterns = patterns('',
     # View returning a template response
-    url(r'^template_response_view/$', views.template_response_view),
+    (r'^template_response_view/$', views.template_response_view),
 
     # A view that can be hard to find...
     url(r'^snark/', views.snark, name='snark'),
-]
+)

@@ -1,5 +1,5 @@
 """
-Using properties on models
+22. Using properties on models
 
 Use properties on models just like on any other Python object.
 """

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Adding __str__() or __unicode__() to models
+2. Adding __str__() or __unicode__() to models
 
 Although it's not a strict requirement, each model should have a
 ``_str__()`` or ``__unicode__()`` method to return a "human-readable"
@@ -26,7 +26,6 @@ class Article(models.Model):
         # Caution: this is only safe if you are certain that headline will be
         # in ASCII.
         return self.headline
-
 
 @python_2_unicode_compatible
 class InternationalArticle(models.Model):

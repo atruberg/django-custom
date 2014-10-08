@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -17,11 +14,10 @@ class SessionManager(models.Manager):
         if session_dict:
             s.save()
         else:
-            s.delete()  # Clear sessions with no data.
+            s.delete() # Clear sessions with no data.
         return s
 
 
-@python_2_unicode_compatible
 class Session(models.Model):
     """
     Django provides full support for anonymous sessions. The session
@@ -49,9 +45,6 @@ class Session(models.Model):
         db_table = 'django_session'
         verbose_name = _('session')
         verbose_name_plural = _('sessions')
-
-    def __str__(self):
-        return self.session_key
 
     def get_decoded(self):
         return SessionStore().decode(self.session_data)

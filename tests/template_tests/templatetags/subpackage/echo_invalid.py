@@ -1,1 +1,1 @@
-import nonexistent.module  # NOQA
+import nonexistent.module

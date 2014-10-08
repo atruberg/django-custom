@@ -5,13 +5,11 @@ import os
 import random
 import sys
 import time
-from email import (charset as Charset, encoders as Encoders,
-    message_from_string, generator)
-from email.message import Message
+from email import generator
+from email import charset as Charset, encoders as Encoders
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
-from email.mime.message import MIMEMessage
 from email.header import Header
 from email.utils import formatdate, getaddresses, formataddr, parseaddr
 
@@ -25,6 +23,7 @@ from django.utils import six
 # some spam filters.
 utf8_charset = Charset.Charset('utf-8')
 utf8_charset.body_encoding = None  # Python defaults to BASE64
+
 
 # Default MIME type to use on attachments (if it is not explicitly given
 # and cannot be guessed).
@@ -64,7 +63,7 @@ def make_msgid(idstring=None):
 
 
 # Header names that contain structured address data (RFC #5322)
-ADDRESS_HEADERS = {
+ADDRESS_HEADERS = set([
     'from',
     'sender',
     'reply-to',
@@ -76,7 +75,7 @@ ADDRESS_HEADERS = {
     'resent-to',
     'resent-cc',
     'resent-bcc',
-}
+])
 
 
 def forbid_multi_line_headers(name, val, encoding):
@@ -153,20 +152,12 @@ class MIMEMixin():
             return fp.getvalue()
 
 
-class SafeMIMEMessage(MIMEMixin, MIMEMessage):
-
-    def __setitem__(self, name, val):
-        # message/rfc822 attachments must be ASCII
-        name, val = forbid_multi_line_headers(name, val, 'ascii')
-        MIMEMessage.__setitem__(self, name, val)
-
-
 class SafeMIMEText(MIMEMixin, MIMEText):
 
     def __init__(self, text, subtype, charset):
         self.encoding = charset
         if charset == 'utf-8':
-            # Unfortunately, Python < 3.5 doesn't support setting a Charset instance
+            # Unfortunately, Python doesn't support setting a Charset instance
             # as MIMEText init parameter (http://bugs.python.org/issue16324).
             # We do it manually and trigger re-encoding of the payload.
             MIMEText.__init__(self, text, subtype, None)
@@ -291,8 +282,7 @@ class EmailMessage(object):
         into the resulting message attachments.
         """
         if isinstance(filename, MIMEBase):
-            assert content is None
-            assert mimetype is None
+            assert content == mimetype == None
             self.attachments.append(filename)
         else:
             assert content is not None
@@ -325,26 +315,11 @@ class EmailMessage(object):
     def _create_mime_attachment(self, content, mimetype):
         """
         Converts the content, mimetype pair into a MIME attachment object.
-
-        If the mimetype is message/rfc822, content may be an
-        email.Message or EmailMessage object, as well as a str.
         """
         basetype, subtype = mimetype.split('/', 1)
         if basetype == 'text':
             encoding = self.encoding or settings.DEFAULT_CHARSET
             attachment = SafeMIMEText(content, subtype, encoding)
-        elif basetype == 'message' and subtype == 'rfc822':
-            # Bug #18967: per RFC2046 s5.2.1, message/rfc822 attachments
-            # must not be base64 encoded.
-            if isinstance(content, EmailMessage):
-                # convert content into an email.Message first
-                content = content.message()
-            elif not isinstance(content, Message):
-                # For compatibility with existing code, parse the message
-                # into an email.Message object if it is not one already.
-                content = message_from_string(content)
-
-            attachment = SafeMIMEMessage(content, subtype)
         else:
             # Encode non-text attachments with base64.
             attachment = MIMEBase(basetype, subtype)
@@ -393,9 +368,7 @@ class EmailMultiAlternatives(EmailMessage):
         bytestrings). The SafeMIMEText class will handle any necessary encoding
         conversions.
         """
-        super(EmailMultiAlternatives, self).__init__(
-            subject, body, from_email, to, bcc, connection, attachments, headers, cc
-        )
+        super(EmailMultiAlternatives, self).__init__(subject, body, from_email, to, bcc, connection, attachments, headers, cc)
         self.alternatives = alternatives or []
 
     def attach_alternative(self, content, mimetype):

@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Callable defaults
+32. Callable defaults
 
 You can pass callable objects as the ``default`` parameter to a field. When
 the object is created without an explicit value passed in, Django will call

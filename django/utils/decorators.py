@@ -1,10 +1,5 @@
 "Functions that help with dynamically creating decorators for views."
 
-try:
-    from contextlib import ContextDecorator
-except ImportError:
-    ContextDecorator = None
-
 from functools import wraps, update_wrapper, WRAPPER_ASSIGNMENTS
 
 from django.utils import six
@@ -13,7 +8,7 @@ from django.utils import six
 class classonlymethod(classmethod):
     def __get__(self, instance, owner):
         if instance is not None:
-            raise AttributeError("This method is available only on the class, not on instances.")
+            raise AttributeError("This method is available only on the view class.")
         return super(classonlymethod, self).__get__(instance, owner)
 
 
@@ -27,7 +22,7 @@ def method_decorator(decorator):
         def _wrapper(self, *args, **kwargs):
             @decorator
             def bound_func(*args2, **kwargs2):
-                return func.__get__(self, type(self))(*args2, **kwargs2)
+                return func(self, *args2, **kwargs2)
             # bound_func has the signature that 'decorator' expects i.e.  no
             # 'self' argument, but it is a closure over self so it can call
             # 'func' correctly.
@@ -35,7 +30,6 @@ def method_decorator(decorator):
         # In case 'decorator' adds attributes to the function it decorates, we
         # want to copy those. We don't have access to bound_func in this scope,
         # but we can cheat by using it on a dummy function.
-
         @decorator
         def dummy(*args, **kwargs):
             pass
@@ -44,13 +38,9 @@ def method_decorator(decorator):
         update_wrapper(_wrapper, func)
 
         return _wrapper
-
-    update_wrapper(_dec, decorator, assigned=available_attrs(decorator))
+    update_wrapper(_dec, decorator)
     # Change the name to aid debugging.
-    if hasattr(decorator, '__name__'):
-        _dec.__name__ = 'method_decorator(%s)' % decorator.__name__
-    else:
-        _dec.__name__ = 'method_decorator(%s)' % decorator.__class__.__name__
+    _dec.__name__ = 'method_decorator(%s)' % decorator.__name__
     return _dec
 
 
@@ -94,7 +84,6 @@ def available_attrs(fn):
 def make_middleware_decorator(middleware_class):
     def _make_decorator(*m_args, **m_kwargs):
         middleware = middleware_class(*m_args, **m_kwargs)
-
         def _decorator(view_func):
             @wraps(view_func, assigned=available_attrs(view_func))
             def _wrapped_view(request, *args, **kwargs):
@@ -129,18 +118,3 @@ def make_middleware_decorator(middleware_class):
             return _wrapped_view
         return _decorator
     return _make_decorator
-
-
-if ContextDecorator is None:
-    # ContextDecorator was introduced in Python 3.2
-    # See https://docs.python.org/3/library/contextlib.html#contextlib.ContextDecorator
-    class ContextDecorator(object):
-        """
-        A base class that enables a context manager to also be used as a decorator.
-        """
-        def __call__(self, func):
-            @wraps(func, assigned=available_attrs(func))
-            def inner(*args, **kwargs):
-                with self:
-                    return func(*args, **kwargs)
-            return inner

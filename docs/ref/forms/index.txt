@@ -2,8 +2,7 @@
 Forms
 =====
 
-Detailed form API reference. For introductory material, see the
-:doc:`/topics/forms/index` topic guide.
+Detailed form API reference. For introductory material, see :doc:`/topics/forms/index`.
 
 .. toctree::
    :maxdepth: 2
